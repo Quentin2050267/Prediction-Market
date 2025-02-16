@@ -22,7 +22,9 @@ It is a baseline for our prediction market wen3 dapp. One problem here is it nee
     ```bash
     cd contract
     npm install
+    npm run deploy -- -k <your-secret-key> # should go to thirdweb and create one
     ```
+
     ```bash
     cd ../
     cd frontend
