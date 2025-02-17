@@ -35,3 +35,8 @@ It is a baseline for our prediction market wen3 dapp. One problem here is it nee
     ```bash
     npm run dev
     ```
+## Glimpse
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/f5aa7e17-9b78-4714-bed8-96102c8ab1dc" />
+
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/7a98e5fc-4c4c-4abe-bf06-b029599e7a60" />
+
