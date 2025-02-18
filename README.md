@@ -30,6 +30,9 @@ It is a baseline for our prediction market wen3 dapp. One problem here is it nee
     cd frontend
     npm install
     ```
+3. Create the `.env` file under frontend
+   Write the following content into `.env`, replace the red box with your own id and key from thirdweb
+   <img width="1470" alt="image" src="https://github.com/user-attachments/assets/f0f1df57-c70a-4345-93fb-1c02498d6c3a" />
 
 3. Run the development server:
     ```bash
