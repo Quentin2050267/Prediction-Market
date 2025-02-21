@@ -100,21 +100,16 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         require(_amount > 0, "Amount must be greater than 0");
         require(!market.resolved, "Market has been resolved");
 
-        uint256 totalShares = _isOptionA ? market.totalOptionAShares : market.totalOptionBShares;
-        uint256 sharesBalance = _isOptionA ? market.optionASharesBalance[msg.sender] : market.optionBSharesBalance[msg.sender];
-        uint256 sharesToBuy = _amount;
-
-        require(sharesToBuy + sharesBalance <= totalShares, "Insufficient shares");
-
-        if (_isOptionA) {
-            market.optionASharesBalance[msg.sender] += sharesToBuy;
-            market.totalOptionAShares += sharesToBuy;
-        } else {
-            market.optionBSharesBalance[msg.sender] += sharesToBuy;
-            market.totalOptionBShares += sharesToBuy;
-        }
 
         require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+        if (_isOptionA) {
+            market.optionASharesBalance[msg.sender] += _amount;
+            market.totalOptionAShares += _amount;
+        } else {
+            market.optionBSharesBalance[msg.sender] += _amount;
+            market.totalOptionBShares += _amount;
+        }
+
         emit SharesPurchased(_marketId, msg.sender, _isOptionA, _amount);
     }
 
