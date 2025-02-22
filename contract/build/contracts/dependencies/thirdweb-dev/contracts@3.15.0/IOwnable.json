@@ -1,0 +1,358 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "prevOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnerUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "setOwner",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "allSourcePaths": {
+    "2": "/Users/panweiqi/.brownie/packages/thirdweb-dev/contracts@3.15.0/contracts/extension/interface/IOwnable.sol"
+  },
+  "ast": {
+    "absolutePath": "/Users/panweiqi/.brownie/packages/thirdweb-dev/contracts@3.15.0/contracts/extension/interface/IOwnable.sol",
+    "exportedSymbols": {
+      "IOwnable": [
+        892
+      ]
+    },
+    "id": 893,
+    "license": "Apache-2.0",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 871,
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "39:23:2"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IOwnable",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": {
+          "id": 872,
+          "nodeType": "StructuredDocumentation",
+          "src": "86:313:2",
+          "text": "  Thirdweb's `Ownable` is a contract extension to be used with any base contract. It exposes functions for setting and reading\n  who the 'owner' of the inheriting smart contract is, and lets the inheriting contract perform conditional logic that uses\n  information about who the contract's owner is."
+        },
+        "fullyImplemented": false,
+        "id": 892,
+        "linearizedBaseContracts": [
+          892
+        ],
+        "name": "IOwnable",
+        "nameLocation": "411:8:2",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "documentation": {
+              "id": 873,
+              "nodeType": "StructuredDocumentation",
+              "src": "426:43:2",
+              "text": "@dev Returns the owner of the contract."
+            },
+            "functionSelector": "8da5cb5b",
+            "id": 878,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "owner",
+            "nameLocation": "483:5:2",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 874,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "488:2:2"
+            },
+            "returnParameters": {
+              "id": 877,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 876,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 878,
+                  "src": "514:7:2",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 875,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "514:7:2",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "513:9:2"
+            },
+            "scope": 892,
+            "src": "474:49:2",
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "documentation": {
+              "id": 879,
+              "nodeType": "StructuredDocumentation",
+              "src": "529:100:2",
+              "text": "@dev Lets a module admin set a new owner for the contract. The new owner must be a module admin."
+            },
+            "functionSelector": "13af4035",
+            "id": 884,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setOwner",
+            "nameLocation": "643:8:2",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 882,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 881,
+                  "mutability": "mutable",
+                  "name": "_newOwner",
+                  "nameLocation": "660:9:2",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 884,
+                  "src": "652:17:2",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 880,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "652:7:2",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "651:19:2"
+            },
+            "returnParameters": {
+              "id": 883,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "679:0:2"
+            },
+            "scope": 892,
+            "src": "634:46:2",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "anonymous": false,
+            "documentation": {
+              "id": 885,
+              "nodeType": "StructuredDocumentation",
+              "src": "686:41:2",
+              "text": "@dev Emitted when a new Owner is set."
+            },
+            "eventSelector": "8292fce18fa69edf4db7b94ea2e58241df0ae57f97e0a6c9b29067028bf92d76",
+            "id": 891,
+            "name": "OwnerUpdated",
+            "nameLocation": "738:12:2",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 890,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 887,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "prevOwner",
+                  "nameLocation": "767:9:2",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 891,
+                  "src": "751:25:2",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 886,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "751:7:2",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 889,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "newOwner",
+                  "nameLocation": "794:8:2",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 891,
+                  "src": "778:24:2",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 888,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "778:7:2",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "750:53:2"
+            },
+            "src": "732:72:2"
+          }
+        ],
+        "scope": 893,
+        "src": "401:405:2",
+        "usedErrors": [],
+        "usedEvents": [
+          891
+        ]
+      }
+    ],
+    "src": "39:768:2"
+  },
+  "bytecode": "",
+  "bytecodeSha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+  "compiler": {
+    "evm_version": "istanbul",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "version": "0.8.28+commit.7893614a"
+  },
+  "contractName": "IOwnable",
+  "coverageMap": {
+    "branches": {},
+    "statements": {}
+  },
+  "dependencies": [],
+  "deployedBytecode": "",
+  "deployedSourceMap": "",
+  "language": "Solidity",
+  "natspec": {
+    "events": {
+      "OwnerUpdated(address,address)": {
+        "details": "Emitted when a new Owner is set."
+      }
+    },
+    "kind": "dev",
+    "methods": {
+      "owner()": {
+        "details": "Returns the owner of the contract."
+      },
+      "setOwner(address)": {
+        "details": "Lets a module admin set a new owner for the contract. The new owner must be a module admin."
+      }
+    },
+    "notice": "Thirdweb's `Ownable` is a contract extension to be used with any base contract. It exposes functions for setting and reading  who the 'owner' of the inheriting smart contract is, and lets the inheriting contract perform conditional logic that uses  information about who the contract's owner is.",
+    "version": 1
+  },
+  "offset": [
+    401,
+    806
+  ],
+  "opcodes": "",
+  "pcMap": {},
+  "sha1": "9943d70b7b73ca258fb0984d42ac8463988d6879",
+  "source": "// SPDX-License-Identifier: Apache-2.0\npragma solidity ^0.8.0;\n\n/// @author thirdweb\n\n/**\n *  Thirdweb's `Ownable` is a contract extension to be used with any base contract. It exposes functions for setting and reading\n *  who the 'owner' of the inheriting smart contract is, and lets the inheriting contract perform conditional logic that uses\n *  information about who the contract's owner is.\n */\n\ninterface IOwnable {\n    /// @dev Returns the owner of the contract.\n    function owner() external view returns (address);\n\n    /// @dev Lets a module admin set a new owner for the contract. The new owner must be a module admin.\n    function setOwner(address _newOwner) external;\n\n    /// @dev Emitted when a new Owner is set.\n    event OwnerUpdated(address indexed prevOwner, address indexed newOwner);\n}\n",
+  "sourceMap": "",
+  "sourcePath": "/Users/panweiqi/.brownie/packages/thirdweb-dev/contracts@3.15.0/contracts/extension/interface/IOwnable.sol",
+  "type": "interface"
+}

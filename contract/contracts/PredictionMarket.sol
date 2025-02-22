@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import { IERC20 } from "@thirdweb-dev/contracts/eip/interface/IERC20.sol";
-import { Ownable } from "@thirdweb-dev/contracts/extension/Ownable.sol";
-import { ReentrancyGuard } from "@thirdweb-dev/contracts/external-deps/openzeppelin/security/ReentrancyGuard.sol";
+import "thirdweb-dev/contracts@3.15.0/contracts/eip/interface/IERC20.sol";
+import "thirdweb-dev/contracts@3.15.0/contracts/extension/Ownable.sol";
+import "thirdweb-dev/contracts@3.15.0/contracts/extension/upgradeable/ReentrancyGuard.sol";
+import "contracts/AMM.sol";
 
 contract PredictionMarket is Ownable, ReentrancyGuard {
     enum MarketOutcome {
@@ -28,6 +29,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
 
     IERC20 public bettingToken;
     uint256 public marketCount;
+    AutomatedMarketMaker public AMM;
     mapping(uint256 => Market) public markets;
 
     event MarketCreated(
@@ -56,9 +58,10 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         uint256 amount
     );
 
-    constructor(address _bettingToken) {
+    constructor(address _bettingToken, address _ammAddress) {
         bettingToken = IERC20(_bettingToken);
         _setupOwner(msg.sender); 
+        AMM = AutomatedMarketMaker(_ammAddress);
     }
 
     function _canSetOwner() internal view virtual override returns (bool) {
@@ -100,22 +103,22 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         require(_amount > 0, "Amount must be greater than 0");
         require(!market.resolved, "Market has been resolved");
 
-        uint256 totalShares = _isOptionA ? market.totalOptionAShares : market.totalOptionBShares;
-        uint256 sharesBalance = _isOptionA ? market.optionASharesBalance[msg.sender] : market.optionBSharesBalance[msg.sender];
-        uint256 sharesToBuy = _amount;
+        // 自定义价格
+        uint256 price = AMM.getPrice(_marketId, _isOptionA, _amount);
+        uint256 totalCost = price * _amount / 1e18;
 
-        require(sharesToBuy + sharesBalance <= totalShares, "Insufficient shares");
+        require(bettingToken.transferFrom(msg.sender, address(this), totalCost), "Transfer failed");
+        uint256 sharesReceived = AMM.getShares(_marketId, _isOptionA, _amount);
 
         if (_isOptionA) {
-            market.optionASharesBalance[msg.sender] += sharesToBuy;
-            market.totalOptionAShares += sharesToBuy;
+            market.optionASharesBalance[msg.sender] += sharesReceived;
+            market.totalOptionAShares += sharesReceived;
         } else {
-            market.optionBSharesBalance[msg.sender] += sharesToBuy;
-            market.totalOptionBShares += sharesToBuy;
+            market.optionBSharesBalance[msg.sender] += sharesReceived;
+            market.totalOptionBShares += sharesReceived;
         }
 
-        require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
-        emit SharesPurchased(_marketId, msg.sender, _isOptionA, _amount);
+        emit SharesPurchased(_marketId, msg.sender, _isOptionA, sharesReceived);
     }
 
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
