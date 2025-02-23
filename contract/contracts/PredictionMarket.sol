@@ -93,6 +93,30 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         return marketId;
     }
 
+    function buyByAmount(uint256 _marketId, bool _isOptionA, uint256 _amount) external {
+    Market storage market = markets[_marketId];
+    require(market.endTime > block.timestamp, "Market has ended");
+    require(_amount > 0, "Amount must be greater than 0");
+    require(!market.resolved, "Market has been resolved");
+
+    // 通过 AMM 计算用户能获得多少份额
+    uint256 shares = AMM.getShares(_marketId, _isOptionA, _amount);
+
+    // 代币支付
+    require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+
+    // 记录份额
+    if (_isOptionA) {
+        market.optionASharesBalance[msg.sender] += shares;
+        market.totalOptionAShares += shares;
+    } else {
+        market.optionBSharesBalance[msg.sender] += shares;
+        market.totalOptionBShares += shares;
+    }
+
+    emit SharesPurchased(_marketId, msg.sender, _isOptionA, shares);
+}
+
     function buyShares(
         uint256 _marketId, 
         bool _isOptionA, 
@@ -100,8 +124,8 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         external {
         Market storage market = markets[_marketId];
         require(market.endTime > block.timestamp, "Market has ended");
-        require(_amount > 0, "Amount must be greater than 0");
         require(!market.resolved, "Market has been resolved");
+        require(_amount > 0, "Amount must be greater than 0");
 
         // 自定义价格
         uint256 price = AMM.getPrice(_marketId, _isOptionA, _amount);
