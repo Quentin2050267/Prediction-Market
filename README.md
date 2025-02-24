@@ -53,7 +53,9 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
     ```
 
     There should be 5 entries in `.env`.
-6. Configure `.env` file in the frontend directory:
+   <img width="440" alt="image" src="https://github.com/user-attachments/assets/0eb711b6-64b9-46b1-9827-cdea579fcfe3" />
+
+7. Configure `.env` file in the frontend directory:
     ```bash
     cd ../frontend
     npm install
@@ -65,6 +67,8 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
     THIRDWEB_SECRET_KEY="secret_key_in_thirdweb"
     KAIROS_TESTNET_URL="https://public-en-kairos.node.kaia.io"
     ```
+    <img width="445" alt="image" src="https://github.com/user-attachments/assets/1f5a6e3c-d486-4af7-965f-13c061f3c775" />
+
 
 ### Run the development server
 
@@ -76,4 +80,4 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
 ## Glimpse
 ![image](https://github.com/user-attachments/assets/f5aa7e17-9b78-4714-bed8-96102c8ab1dc)
 
-![image](https://github.com/user-attachments/assets/7a98e5fc-4c4c-4abe-bf06-b029599e7a60)
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/313a1b31-0470-4a09-af89-cd7df9b0a1d9" />
