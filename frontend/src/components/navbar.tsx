@@ -1,17 +1,18 @@
 "use client";
 
-import { ConnectButton, lightTheme, useActiveAccount } from "thirdweb/react";
+import { ConnectButton, lightTheme, useActiveAccount, useSendAndConfirmTransaction } from "thirdweb/react";
+import { prepareContractCall } from "thirdweb";
 import { client } from "@/app/client";
-import { baseSepolia, base } from "thirdweb/chains";
+import { kaiaTestnet } from "@/chain.config";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
     inAppWallet,
     createWallet,
   } from "thirdweb/wallets";
-import { tokenContractAddress } from "@/constants/contract";
+import { tokenContract,tokenContractAddress } from "@/constants/contract";
 
 const wallets = [
     inAppWallet({
@@ -35,24 +36,23 @@ const wallets = [
     createWallet("io.zerion.wallet"),
   ];
 
-  
 export function Navbar() {
     const account = useActiveAccount();
     const [isClaimLoading, setIsClaimLoading] = useState(false);
     const { toast } = useToast();
 
+    const { mutateAsync: sendTransaction } = useSendAndConfirmTransaction();
+
     const handleClaimTokens = async () => {
         setIsClaimLoading(true);
         try {
-            const resp = await fetch("/api/claimToken", {
-                method: "POST",
-                body: JSON.stringify({ address: account?.address }),
+            const tx = await prepareContractCall({
+                contract: tokenContract,
+                method: "function claim()",
+                params: []
             });
-            
-            if (!resp.ok) {
-                throw new Error('Failed to claim tokens');
-            }
 
+            await sendTransaction(tx);
             toast({
                 title: "Tokens Claimed!",
                 description: "Your tokens have been successfully claimed.",
@@ -93,26 +93,22 @@ export function Navbar() {
                 <ConnectButton 
                     client={client} 
                     theme={lightTheme()}
-                    chain={base}
+                    chain={kaiaTestnet}
                     connectButton={{
                         style: {
                             fontSize: '0.75rem !important',
                             height: '2.5rem !important',
                         },
-                        // label: 'Sign In',
                     }}
-                    // detailsButton={{
-                    //     displayBalanceToken: {
-                    //         [base.id]: tokenContractAddress
-                    //     }
-                    // }}
-                    // wallets={[
-                        // inAppWallet(),
-                    // ]}
+                    detailsButton={{
+                        displayBalanceToken: {
+                            [kaiaTestnet.id]: tokenContractAddress
+                        }
+                    }}
                     wallets={wallets}
                     connectModal={{size: 'wide'}}
                     accountAbstraction={{
-                        chain: base,
+                        chain: kaiaTestnet,
                         sponsorGas: true,
                     }}
                 />

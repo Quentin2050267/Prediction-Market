@@ -1,5 +1,5 @@
 # Web3-Prediction-Market
-It is a baseline for our prediction market wen3 dapp. One problem here is it needs some gas fee to depoly(?) the smart contract on the thirdweb thus needing to actually be connected to the wallet which has some crypto in it. So this version only uses mock data as shown in the frontend. There is no token transaction for now. I have applied for the support for free development, hope it will be approved. 🤞
+It is a baseline for our prediction market wen3 dapp. **It is now fully connected into Kaia Testnet.**
 
 ## Implementation
 
@@ -7,8 +7,9 @@ It is a baseline for our prediction market wen3 dapp. One problem here is it nee
 
 - Node.js (mine is 20.17.0)
 - npm (mine is 10.8.2)
-- Metamask
+- Metamask 
 - Thirdweb
+- Go to https://www.kaia.io/faucet and claim some test tokens yourself every 24h with Metamask wallet address.
 
 ### Installation
 
@@ -22,17 +23,39 @@ It is a baseline for our prediction market wen3 dapp. One problem here is it nee
     ```bash
     cd contract
     npm install
-    npm run deploy -- -k <your-secret-key> # should go to thirdweb and create one
+    touch .env
     ```
+    Go to [Thirdweb](http://www.thirdweb.com/) and create a secret key. You need to write down two things in this website, one is **your-secret-key** and the other is the **client id**. Replace `<your-secret-key>` with the actual key you created.
+
+
+    ``` bash
+    npm run deploy -- -k <your-secret-key> 
+    ```
+    
+    Write `DEPLOYER_ADDRESS= "your_metamask_wallet_address"` into `.env` under dir contract.
+    Write `KAIROS_TESTNET_URL= "https://public-en-kairos.node.kaia.io"` into `.env` under dir contract.
+    Write `PRIVATE_KEY= "your_metamask_wallet_private_key"` into `.env` under dir contract.
+
+    Deploy the prediction market contract and our own swan token(SWT) contract.
+    ``` bash
+    npx hardhat run scripts/deploy.js --network kairos 
+    ```
+    **Please copy the addresses of these two contract and paste into ../frontend/src/constants/contracts.ts and .env**
+
+    Your .env should look like follows:
 
     ```bash
     cd ../
     cd frontend
     npm install
+    touch .env
     ```
-3. Create the `.env` file under frontend
-   Write the following content into `.env`, replace the red box with your own id and key from thirdweb
-   <img width="1470" alt="image" src="https://github.com/user-attachments/assets/f0f1df57-c70a-4345-93fb-1c02498d6c3a" />
+    
+    Write
+    NEXT_PUBLIC_THIRDWEB_CLIENT_ID="client_id_in_thirdweb"
+    THIRDWEB_SECRET_KEY="secret_key_in_thirdweb"
+    KAIROS_TESTNET_URL= "https://public-en-kairos.node.kaia.io"
+    into the `.env` under dir frontend. (Not the same .`env` stated above)
 
 3. Run the development server:
     ```bash

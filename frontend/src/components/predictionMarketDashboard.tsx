@@ -1,7 +1,7 @@
 'use client'
 
 import { useReadContract } from 'thirdweb/react'
-// import { contract } from '@/constants/contract'
+import { contract } from '@/constants/contract'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MarketCard } from './marketCard'
 import { Navbar } from "./navbar"
@@ -22,13 +22,16 @@ const stockData = [
 
 export default function PredictionMarketDashboard() {
     // wait for the contract to be deployed
-    // const { data: marketCount, isLoading: isLoadingMarketCount } = useReadContract({
-    //     contract,
-    //     method: "function marketCount() view returns (uint256)",
-    //     params: []
-    // }); 
-    const marketCount = 12;
-    const isLoadingMarketCount = false;
+    const { data: marketCount, isLoading: isLoadingMarketCount } = useReadContract({
+        contract,
+        method: "function marketCount() view returns (uint256)",
+        params: []
+    }); 
+
+    console.log(marketCount);
+    console.log(isLoadingMarketCount);
+    // const marketCount = 12;
+    // const isLoadingMarketCount = false;
 
     // Show 6 skeleton cards while loading
     const skeletonCards = Array.from({ length: 6 }, (_, i) => (

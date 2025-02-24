@@ -26,7 +26,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         mapping(address => bool) hasClaimed;
     }
 
-    IERC20 public bettingToken;
+    IERC20 public swanToken;
     uint256 public marketCount;
     mapping(uint256 => Market) public markets;
 
@@ -56,8 +56,8 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         uint256 amount
     );
 
-    constructor(address _bettingToken) {
-        bettingToken = IERC20(_bettingToken);
+    constructor(address _swanToken) {
+        swanToken = IERC20(_swanToken);
         _setupOwner(msg.sender); 
     }
 
@@ -101,7 +101,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         require(!market.resolved, "Market has been resolved");
 
 
-        require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+        require(swanToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
         if (_isOptionA) {
             market.optionASharesBalance[msg.sender] += _amount;
             market.totalOptionAShares += _amount;
@@ -153,7 +153,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         uint256 rewardRatio = (losingShares*1e18) / winningShares;
         uint256 winnings = userShares + (userShares * rewardRatio) / 1e18;
 
-        require(bettingToken.transfer(msg.sender, winnings), "Transfer failed");
+        require(swanToken.transfer(msg.sender, winnings), "Transfer failed");
         emit Claimed(_marketId, msg.sender, winnings);
     }
 

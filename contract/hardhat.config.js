@@ -1,6 +1,7 @@
 require("@matterlabs/hardhat-zksync-solc");
 require("@matterlabs/hardhat-zksync-verify");
-
+require("@nomicfoundation/hardhat-toolbox");
+require('dotenv').config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -29,6 +30,12 @@ module.exports = {
       chainId: 324,
       verifyURL:
         "https://zksync2-mainnet-explorer.zksync.io/contract_verification",
+    },
+    kairos: {
+      url: process.env.KAIROS_TESTNET_URL || "",
+      gasPrice: 250000000000,
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },
   paths: {

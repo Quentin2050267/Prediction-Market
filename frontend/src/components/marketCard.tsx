@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { useActiveAccount, useReadContract } from "thirdweb/react";
-// import { contract } from "@/constants/contract";
+import { contract } from "@/constants/contract";
 import { MarketProgress } from "./market-progress";
 import { MarketTime } from "./market-time";
 import { MarketCardSkeleton } from "./market-card-skeleton";
@@ -20,10 +20,10 @@ interface MarketCardProps {
 // Interface for the market data
 interface Market {
     question: string;
-    optionA: string;
-    optionB: string;
     endTime: bigint;
     outcome: number;
+    optionA: string;
+    optionB: string;
     totalOptionAShares: bigint;
     totalOptionBShares: bigint;
     resolved: boolean;
@@ -72,45 +72,39 @@ export function MarketCard({ index, filter }: MarketCardProps) {
     const account = useActiveAccount();
 
     // Get the market data
-    // const { data: marketData, isLoading: isLoadingMarketData } = useReadContract({
-    //     contract,
-    //     method: "function getMarketInfo(uint256 _marketId) view returns (string question, string optionA, string optionB, uint256 endTime, uint8 outcome, uint256 totalOptionAShares, uint256 totalOptionBShares, bool resolved)",
-    //     params: [BigInt(index)]
-    // });
+    const { data: marketData, isLoading: isLoadingMarketData } = useReadContract({
+        contract,
+        method: "function getMarketInfo(uint256 _marketId) view returns (string question, uint256 endTime, uint8 outcome, string optionA, string optionB, uint256 totalOptionAShares, uint256 totalOptionBShares, bool resolved)",
+        params: [BigInt(index)]
+    });
+    
+    console.log(index);
+    console.log(marketData);
+    console.log(isLoadingMarketData);
     // wait for the contract to be deployed
-    const { marketData } = generateFakeMarketData(index);
-    // const marketData = [
-    //     "What is the capital of France?", 
-    //     "Paris", 
-    //     "Berlin", 
-    //     BigInt(1731095200), 
-    //     0, 
-    //     BigInt(100), 
-    //     BigInt(100), 
-    //     false
-    // ];
-    const isLoadingMarketData = false;
+    // const { marketData } = generateFakeMarketData(index);
+    // const isLoadingMarketData = false;
 
     // Parse the market data
     const market: Market | undefined = marketData ? {
         question: marketData[0],
-        optionA: marketData[1],
-        optionB: marketData[2],
-        endTime: marketData[3],
-        outcome: marketData[4],
+        endTime: marketData[1],
+        outcome: marketData[2],
+        optionA: marketData[3],
+        optionB: marketData[4],
         totalOptionAShares: marketData[5],
         totalOptionBShares: marketData[6],
         resolved: marketData[7]
     } : undefined;
 
     // Get the shares balance
-    // const { data: sharesBalanceData } = useReadContract({
-    //     contract,
-    //     method: "function getSharesBalance(uint256 _marketId, address _user) view returns (uint256 optionAShares, uint256 optionBShares)",
-    //     params: [BigInt(index), account?.address as string]
-    // });
+    const { data: sharesBalanceData } = useReadContract({
+        contract,
+        method: "function getSharesBalance(uint256 _marketId, address _user) view returns (uint256 optionAShares, uint256 optionBShares)",
+        params: [BigInt(index), account?.address as string]
+    });
     // wait for the contract to be deployed
-    const sharesBalanceData = [BigInt(15*1e18), BigInt(2*1e18)];
+    // const sharesBalanceData = [BigInt(15*1e18), BigInt(2*1e18)];
 
     // Parse the shares balance
     const sharesBalance: SharesBalance | undefined = sharesBalanceData ? {

@@ -3,11 +3,11 @@ import { Input } from "./ui/input";
 import { useState, useRef, useEffect } from "react";
 import { useActiveAccount, useSendAndConfirmTransaction } from "thirdweb/react";
 import { prepareContractCall, readContract, toWei } from "thirdweb";
-// import { contract, tokenContract } from "@/constants/contract";
+import { contract, tokenContract } from "@/constants/contract";
 import { approve } from "thirdweb/extensions/erc20";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 // Types for the component props
 interface MarketBuyInterfaceProps {
@@ -25,9 +25,9 @@ type Option = 'A' | 'B' | null;
 
 export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps) {
     // Blockchain interactions
-    // const account = useActiveAccount();
+    const account = useActiveAccount();
     // wait for the contract to be deployed
-    const account = { address: "0x1234" };
+    // const account = { address: "0x1234" };
 
     const { mutateAsync: mutateTransaction } = useSendAndConfirmTransaction();
     const { toast } = useToast()
@@ -88,13 +88,13 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
         setError(null);
 
         try {
-            // const userAllowance = await readContract({
-            //     contract: tokenContract,
-            //     method: "function allowance(address owner, address spender) view returns (uint256)",
-            //     params: [account?.address as string, contract.address]
-            // });
+            const userAllowance = await readContract({
+                contract: tokenContract,
+                method: "function allowance(address owner, address spender) view returns (uint256)",
+                params: [account?.address as string, contract.address]
+            });
             // wait for the contract to be deployed
-            const userAllowance = BigInt(0*1e18);
+            // const userAllowance = BigInt(0*1e18);
 
             setBuyingStep(userAllowance < BigInt(toWei(amount.toString())) ? 'allowance' : 'confirm');
         } catch (error) {
@@ -106,12 +106,12 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
     const handleSetApproval = async () => {
         setIsApproving(true);
         try {
-            // const tx = await approve({
-            //     contract: tokenContract,
-            //     spender: contract.address,
-            //     amount: amount
-            // });
-            // await mutateTransaction(tx);
+            const tx = await approve({
+                contract: tokenContract,
+                spender: contract.address,
+                amount: amount
+            });
+            await mutateTransaction(tx);
             // wait for the contract to be deployed
 
             setBuyingStep('confirm');
@@ -131,12 +131,12 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
 
         setIsConfirming(true);
         try {
-            // const tx = await prepareContractCall({
-            //     contract,
-            //     method: "function buyShares(uint256 _marketId, bool _isOptionA, uint256 _amount)",
-            //     params: [BigInt(marketId), selectedOption === 'A', BigInt(toWei(amount.toString()))]
-            // });
-            // await mutateTransaction(tx);
+            const tx = await prepareContractCall({
+                contract,
+                method: "function buyShares(uint256 _marketId, bool _isOptionA, uint256 _amount)",
+                params: [BigInt(marketId), selectedOption === 'A', BigInt(toWei(amount.toString()))]
+            });
+            await mutateTransaction(tx);
             // wait for the contract to be deployed
             
             // Show success toast
