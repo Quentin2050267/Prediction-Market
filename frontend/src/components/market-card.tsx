@@ -153,7 +153,7 @@ export function MarketCard({ index, filter, category, onClick }: MarketCardProps
         return null;
     }
 
-    const assetSymbols = market?.assetSymbol.split('_');
+    const assetSymbols = market?.assetSymbol?.split('_');
     const marketSymbol = assetSymbols ? assetSymbols[0].toUpperCase() : '';
     const quoteSymbol = assetSymbols ? assetSymbols[1].toUpperCase() : '';
 

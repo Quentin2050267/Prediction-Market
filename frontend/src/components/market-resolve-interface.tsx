@@ -80,13 +80,16 @@ export function MarketResolveInterface({ marketId, endTime }: MarketResolveInter
     };
 
     return (
-        <div className="flex items-center justify-center">
+        // <div className="flex items-center justify-center">
+        <div className="flex flex-col gap-2">
             <Button
                 onClick={handleResolve}
                 disabled={isConfirming}
-                className="w-full"
+                // className="w-full"
+                variant="outline"
+                className="mb-2 bg-yellow-200 p-2 rounded-md text-center text-xs"
             >
-                {isConfirming ? "Scheduling..." : "Resolve Market"}
+                {isConfirming ? "Scheduling..." : "Pending Resolution"}
             </Button>
         </div>
     );
