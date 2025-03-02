@@ -125,6 +125,29 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         return (market.optionAVotesByDate[_date], market.optionBVotesByDate[_date]);
     }
 
+    function buyByAmount(uint256 _marketId, bool _isOptionA, uint256 _amount) external {
+            Market storage market = markets[_marketId];
+            require(market.endTime > block.timestamp, "Market has ended");
+            require(_amount > 0, "Amount must be greater than 0");
+            require(!market.resolved, "Market has been resolved");
+
+            uint256 shares = AMM.getShares(_marketId, _isOptionA, _amount);
+
+            // pay
+            require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+
+            // record
+            if (_isOptionA) {
+                market.optionASharesBalance[msg.sender] += shares;
+                market.totalOptionAShares += shares;
+            } else {
+                market.optionBSharesBalance[msg.sender] += shares;
+                market.totalOptionBShares += shares;
+            }
+
+            emit SharesPurchased(_marketId, msg.sender, _isOptionA, shares);
+    }
+
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
         require(msg.sender == owner(), "Only owner can resolve markets");
         Market storage market = markets[_marketId];
