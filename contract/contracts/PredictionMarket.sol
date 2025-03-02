@@ -97,27 +97,27 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
     function buyShares(
         uint256 _marketId, 
         bool _isOptionA, 
-        uint256 _amount) 
+        uint256 _share)
         external {
         Market storage market = markets[_marketId];
         require(market.endTime > block.timestamp, "Market has ended");
-        require(_amount > 0, "Amount must be greater than 0");
+        require(_share > 0, "Amount must be greater than 0");
         require(!market.resolved, "Market has been resolved");
 
         uint256 currentDate = block.timestamp / 1 days;
 
-        require(swanToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+        require(swanToken.transferFrom(msg.sender, address(this), _share), "Transfer failed");
         if (_isOptionA) {
-            market.optionASharesBalance[msg.sender] += _amount;
-            market.totalOptionAShares += _amount;
-            market.optionAVotesByDate[currentDate] += _amount; 
+            market.optionASharesBalance[msg.sender] += _share;
+            market.totalOptionAShares += _share;
+            market.optionAVotesByDate[currentDate] += _share;
         } else {
-            market.optionBSharesBalance[msg.sender] += _amount;
-            market.totalOptionBShares += _amount;
-            market.optionBVotesByDate[currentDate] += _amount;
+            market.optionBSharesBalance[msg.sender] += _share;
+            market.totalOptionBShares += _share;
+            market.optionBVotesByDate[currentDate] += _share;
         }
 
-        emit SharesPurchased(_marketId, msg.sender, _isOptionA, _amount);
+        emit SharesPurchased(_marketId, msg.sender, _isOptionA, _share);
     }
 
     function getVotesByDate(uint256 _marketId, uint256 _date) external view returns (uint256 optionAVotes, uint256 optionBVotes) {
@@ -126,26 +126,26 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
     }
 
     function buyByAmount(uint256 _marketId, bool _isOptionA, uint256 _amount) external {
-            Market storage market = markets[_marketId];
-            require(market.endTime > block.timestamp, "Market has ended");
-            require(_amount > 0, "Amount must be greater than 0");
-            require(!market.resolved, "Market has been resolved");
+        Market storage market = markets[_marketId];
+        require(market.endTime > block.timestamp, "Market has ended");
+        require(_amount > 0, "Amount must be greater than 0");
+        require(!market.resolved, "Market has been resolved");
 
-            uint256 shares = AMM.getShares(_marketId, _isOptionA, _amount);
+        uint256 shares = AMM.getShares(_marketId, _isOptionA, _amount);
 
-            // pay
-            require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+        // pay
+        require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
 
-            // record
-            if (_isOptionA) {
-                market.optionASharesBalance[msg.sender] += shares;
-                market.totalOptionAShares += shares;
-            } else {
-                market.optionBSharesBalance[msg.sender] += shares;
-                market.totalOptionBShares += shares;
-            }
+        // record
+        if (_isOptionA) {
+            market.optionASharesBalance[msg.sender] += shares;
+            market.totalOptionAShares += shares;
+        } else {
+            market.optionBSharesBalance[msg.sender] += shares;
+            market.totalOptionBShares += shares;
+        }
 
-            emit SharesPurchased(_marketId, msg.sender, _isOptionA, shares);
+        emit SharesPurchased(_marketId, msg.sender, _isOptionA, shares);
     }
 
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
