@@ -9,7 +9,7 @@ export function Footer() {
                     <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
                         Built by{" "}
                         <Link
-                            href="https://twitter.com/yourusername"
+                            href="mailto: qin.tian@u.nus.edu"
                             target="_blank"
                             rel="noreferrer"
                             className="font-medium underline underline-offset-4"
@@ -18,7 +18,7 @@ export function Footer() {
                         </Link>
                         . The source code is available on{" "}
                         <Link
-                            href="https://github.com/yourusername/your-repo"
+                            href="https://github.com/Quentin2050267/Prediction-Market"
                             target="_blank"
                             rel="noreferrer"
                             className="font-medium underline underline-offset-4"
@@ -30,7 +30,7 @@ export function Footer() {
                 </div>
                 <div className="flex items-center gap-4">
                     <Link
-                        href="https://github.com/yourusername/your-repo"
+                        href="https://github.com/Quentin2050267/Prediction-Market"
                         target="_blank"
                         rel="noreferrer"
                     >

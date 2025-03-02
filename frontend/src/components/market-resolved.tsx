@@ -1,33 +1,37 @@
 import { Button } from "./ui/button";
 import { prepareContractCall } from "thirdweb";
 import { useSendAndConfirmTransaction } from "thirdweb/react";
-import { contract } from "@/constants/contract";
+import { contract, oracleContract } from "@/constants/contract";
 
 interface MarketResolvedProps {
     marketId: number;
     outcome: number;
     optionA: string;
     optionB: string;
+    category: 'Currency' | 'General';
 }
 
 export function MarketResolved({ 
     marketId,
     outcome, 
     optionA, 
-    optionB
+    optionB,
+    category
 }: MarketResolvedProps) {
     const { mutateAsync: mutateTransaction } = useSendAndConfirmTransaction();
 
-    // wait for the contract to be deployed
+    const contractToUse = category === 'Currency' ? oracleContract : contract;
+
     const handleClaimRewards = async () => {
         try {
             const tx = await prepareContractCall({
-                contract,
+                contract: contractToUse,
                 method: "function claimWinnings(uint256 _marketId)",
                 params: [BigInt(marketId)]
             });
 
             await mutateTransaction(tx);
+            console.log('Rewards claimed');
         } catch (error) {
             console.error(error);
         }

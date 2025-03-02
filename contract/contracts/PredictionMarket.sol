@@ -15,6 +15,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
     struct Market {
         string question;
         uint256 endTime;
+        uint256 duration;
         MarketOutcome outcome;
         string optionA;
         string optionB;
@@ -24,6 +25,8 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         mapping(address => uint256) optionASharesBalance;
         mapping(address => uint256) optionBSharesBalance;
         mapping(address => bool) hasClaimed;
+        mapping(uint256 => uint256) optionAVotesByDate; // new
+        mapping(uint256 => uint256) optionBVotesByDate; // new
     }
 
     IERC20 public swanToken;
@@ -71,7 +74,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         string memory _optionB,
         uint256 _duration
     ) external returns (uint256) {
-        require(msg.sender == owner(), "Only owner can create markets");
+        // require(msg.sender == owner(), "Only owner can create markets");
         require(_duration > 0, "Duration must be greater than 0");
         require(bytes(_question).length > 0, "Question cannot be empty");
         require(bytes(_optionA).length > 0, "Option A cannot be empty");
@@ -85,6 +88,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         market.outcome = MarketOutcome.UNRESOLVED;
         market.optionA = _optionA;
         market.optionB = _optionB;
+        market.duration = _duration;
 
         emit MarketCreated(marketId, _question, _optionA, _optionB, market.endTime);
         return marketId;
@@ -100,17 +104,25 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         require(_amount > 0, "Amount must be greater than 0");
         require(!market.resolved, "Market has been resolved");
 
+        uint256 currentDate = block.timestamp / 1 days;
 
         require(swanToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
         if (_isOptionA) {
             market.optionASharesBalance[msg.sender] += _amount;
             market.totalOptionAShares += _amount;
+            market.optionAVotesByDate[currentDate] += _amount; 
         } else {
             market.optionBSharesBalance[msg.sender] += _amount;
             market.totalOptionBShares += _amount;
+            market.optionBVotesByDate[currentDate] += _amount;
         }
 
         emit SharesPurchased(_marketId, msg.sender, _isOptionA, _amount);
+    }
+
+    function getVotesByDate(uint256 _marketId, uint256 _date) external view returns (uint256 optionAVotes, uint256 optionBVotes) {
+        Market storage market = markets[_marketId];
+        return (market.optionAVotesByDate[_date], market.optionBVotesByDate[_date]);
     }
 
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
@@ -154,12 +166,14 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         uint256 winnings = userShares + (userShares * rewardRatio) / 1e18;
 
         require(swanToken.transfer(msg.sender, winnings), "Transfer failed");
+        market.hasClaimed[msg.sender] = true;
         emit Claimed(_marketId, msg.sender, winnings);
     }
 
     function getMarketInfo(uint256 _marketId) external view returns (
         string memory question,
         uint256 endTime,
+        uint256 duration,
         MarketOutcome outcome,
         string memory optionA,
         string memory optionB,
@@ -171,6 +185,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         return (
             market.question,
             market.endTime,
+            market.duration,
             market.outcome,
             market.optionA,
             market.optionB,

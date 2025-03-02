@@ -1,37 +1,64 @@
 'use client'
 
 import { useReadContract } from 'thirdweb/react'
-import { contract } from '@/constants/contract'
+import { contract, oracleContract } from '@/constants/contract'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MarketCard } from './marketCard'
+import { MarketCard } from './market-card'
 import { Navbar } from "./navbar"
 import { MarketCardSkeleton } from "./market-card-skeleton"
 import { Footer } from "./footer"
+import { useState, useEffect } from 'react';
+import { VoteChart } from './history-chart';
+import { Menu } from './menu-bar';
+import styled from 'styled-components';
 
-// for testing the charts
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-const stockData = [
-    { date: '2025-02-01', close: 150, open: 145 },
-    { date: '2025-02-02', close: 155, open: 150 },
-    { date: '2025-02-03', close: 160, open: 155 },
-    { date: '2025-02-04', close: 158, open: 160 },
-    { date: '2025-02-05', close: 162, open: 158 },
-    { date: '2025-02-06', close: 165, open: 162 },
-    { date: '2025-02-07', close: 170, open: 165 },
-];
+const ChartContainer = styled.div`
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+    opacity: 0;
+
+    &.show {
+        max-height: 500px; /* 根据需要调整高度 */
+        opacity: 1;
+    }
+`;
 
 export default function PredictionMarketDashboard() {
-    // wait for the contract to be deployed
-    const { data: marketCount, isLoading: isLoadingMarketCount } = useReadContract({
-        contract,
+    const [category, setCategory] = useState<'Currency' | 'General'>('General');
+    const [marketCount, setMarketCount] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedMarketIndex, setSelectedMarketIndex] = useState<number | null>(null); // 添加状态来存储选中的市场索引
+    const [chartTitle, setChartTitle] = useState(''); // 添加状态来存储图表标题
+    const [showChart, setShowChart] = useState(false); // 添加状态来控制图表显示
+
+    const { data: generalMarketCount, isLoading: isLoadingGeneralCount } = useReadContract({
+        contract: contract,
         method: "function marketCount() view returns (uint256)",
         params: []
-    }); 
+    });
 
-    console.log(marketCount);
-    console.log(isLoadingMarketCount);
-    // const marketCount = 12;
-    // const isLoadingMarketCount = false;
+    const { data: currencyMarketCount, isLoading: isLoadingCurrencyCount } = useReadContract({
+        contract: oracleContract,
+        method: "function marketCount() view returns (uint256)",
+        params: []
+    });
+
+    useEffect(() => {
+        if (!isLoadingGeneralCount && !isLoadingCurrencyCount) {
+            const count = category === 'Currency' ? currencyMarketCount : generalMarketCount;
+            const loading = category === 'Currency' ? isLoadingCurrencyCount : isLoadingGeneralCount;
+
+            setMarketCount(count ? Number(count) : 0);
+            setIsLoading(loading);
+        }
+    }, [category, isLoadingGeneralCount, isLoadingCurrencyCount]);
+
+    const handleMarketCardClick = (index: number, title: string) => {
+        setSelectedMarketIndex(index); // 更新选中的市场索引
+        setChartTitle(title); // 更新图表标题
+        setShowChart(true); // 显示图表
+    };
 
     // Show 6 skeleton cards while loading
     const skeletonCards = Array.from({ length: 6 }, (_, i) => (
@@ -42,24 +69,17 @@ export default function PredictionMarketDashboard() {
         <div className="min-h-screen flex flex-col">
             <div className="flex-grow container mx-auto p-4">
                 <Navbar />
-                <div style={{ width: '100%', height: 300 }}>
-                    {/* <img 
-                        src="https://placehold.co/800x300" 
-                        alt="Placeholder Banner" 
-                        className="w-full h-auto rounded-lg" 
-                    /> */}
-                    <ResponsiveContainer>
-                        <LineChart data={stockData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip />
-                            {/* <Legend /> */}
-                            <Line type="monotone" dataKey="close" stroke="#ff0000" /> {/* 红色表示收盘价 */}
-                            <Line type="monotone" dataKey="open" stroke="#00ff00" /> {/* 绿色表示开盘价 */}
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
+                <Menu category={category} setCategory={setCategory} />
+                <ChartContainer className={showChart ? 'show' : ''}>
+                    {showChart && selectedMarketIndex !== null && (
+                        <VoteChart 
+                            index={selectedMarketIndex} 
+                            title={chartTitle}
+                            category={category}
+                        />
+                    )}
+                </ChartContainer>
+                
                 <Tabs defaultValue="active" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="active">Active</TabsTrigger>
@@ -67,7 +87,7 @@ export default function PredictionMarketDashboard() {
                         <TabsTrigger value="resolved">Resolved</TabsTrigger>
                     </TabsList>
 
-                    {isLoadingMarketCount ? (
+                    {isLoading ? (
                         <TabsContent value="active" className="mt-6">
                             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                                 {skeletonCards}
@@ -82,6 +102,8 @@ export default function PredictionMarketDashboard() {
                                             key={index}
                                             index={index}
                                             filter="active"
+                                            category={category}
+                                            onClick={handleMarketCardClick}
                                         />
                                     ))}
                                 </div>
@@ -94,6 +116,8 @@ export default function PredictionMarketDashboard() {
                                             key={index}
                                             index={index}
                                             filter="pending"
+                                            category={category}
+                                            onClick={handleMarketCardClick}
                                         />
                                     ))}
                                 </div>
@@ -106,6 +130,8 @@ export default function PredictionMarketDashboard() {
                                             key={index}
                                             index={index}
                                             filter="resolved"
+                                            category={category}
+                                            onClick={handleMarketCardClick}
                                         />
                                     ))}
                                 </div>

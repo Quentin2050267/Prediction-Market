@@ -3,7 +3,7 @@ import { Input } from "./ui/input";
 import { useState, useRef, useEffect } from "react";
 import { useActiveAccount, useSendAndConfirmTransaction } from "thirdweb/react";
 import { prepareContractCall, readContract, toWei } from "thirdweb";
-import { contract, tokenContract } from "@/constants/contract";
+import { contract, oracleContract, tokenContract } from "@/constants/contract";
 import { approve } from "thirdweb/extensions/erc20";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,18 +17,16 @@ interface MarketBuyInterfaceProps {
         optionB: string;
         question: string;
     };
+    category: 'Currency' | 'General';
 }
 
 // Type aliases for better readability
 type BuyingStep = 'initial' | 'allowance' | 'confirm';
 type Option = 'A' | 'B' | null;
 
-export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps) {
+export function MarketBuyInterface({ marketId, market, category }: MarketBuyInterfaceProps) {
     // Blockchain interactions
     const account = useActiveAccount();
-    // wait for the contract to be deployed
-    // const account = { address: "0x1234" };
-
     const { mutateAsync: mutateTransaction } = useSendAndConfirmTransaction();
     const { toast } = useToast()
 
@@ -91,10 +89,8 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
             const userAllowance = await readContract({
                 contract: tokenContract,
                 method: "function allowance(address owner, address spender) view returns (uint256)",
-                params: [account?.address as string, contract.address]
+                params: [account?.address as string, category === 'Currency' ? oracleContract.address : contract.address]
             });
-            // wait for the contract to be deployed
-            // const userAllowance = BigInt(0*1e18);
 
             setBuyingStep(userAllowance < BigInt(toWei(amount.toString())) ? 'allowance' : 'confirm');
         } catch (error) {
@@ -108,11 +104,10 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
         try {
             const tx = await approve({
                 contract: tokenContract,
-                spender: contract.address,
+                spender: category === 'Currency' ? oracleContract.address : contract.address,
                 amount: amount
             });
             await mutateTransaction(tx);
-            // wait for the contract to be deployed
 
             setBuyingStep('confirm');
         } catch (error) {
@@ -132,17 +127,16 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
         setIsConfirming(true);
         try {
             const tx = await prepareContractCall({
-                contract,
+                contract: category === 'Currency' ? oracleContract : contract,
                 method: "function buyShares(uint256 _marketId, bool _isOptionA, uint256 _amount)",
                 params: [BigInt(marketId), selectedOption === 'A', BigInt(toWei(amount.toString()))]
             });
             await mutateTransaction(tx);
-            // wait for the contract to be deployed
-            
+
             // Show success toast
             toast({
                 title: "Purchase Successful!",
-                description: `You bought ${amount} ${selectedOption === 'A' ? market.optionA : market.optionB} shares`,
+                description: `You bought ${amount} ${selectedOption === 'A' ? (category === 'Currency' ? 'Yes' : market.optionA) : (category === 'Currency' ? 'No' : market.optionB)} shares`,
                 duration: 5000, // 5 seconds
             })
             
@@ -179,18 +173,18 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
                         <Button 
                             className="flex-1" 
                             onClick={() => handleBuy('A')}
-                            aria-label={`Vote ${market.optionA} for "${market.question}"`}
+                            aria-label={`Vote ${category === 'Currency' ? 'Yes' : market.optionA} for "${market.question}"`}
                             disabled={!account}
                         >
-                            {market.optionA}
+                            {category === 'Currency' ? 'Yes' : market.optionA}
                         </Button>
                         <Button 
                             className="flex-1"
                             onClick={() => handleBuy('B')}
-                            aria-label={`Vote ${market.optionB} for "${market.question}"`}
+                            aria-label={`Vote ${category === 'Currency' ? 'No' : market.optionB} for "${market.question}"`}
                             disabled={!account}
                         >
-                            {market.optionB}
+                            {category === 'Currency' ? 'No' : market.optionB}
                         </Button>
                     </div>
                 ) : (
@@ -232,7 +226,7 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
                                 <h2 className="text-lg font-bold mb-4">Confirm Transaction</h2>
                                 <p className="mb-4">
                                     You are about to buy <span className="font-bold">
-                                        {amount} {selectedOption === 'A' ? market.optionA : market.optionB}
+                                        {amount} {selectedOption === 'A' ? (category === 'Currency' ? 'Yes' : market.optionA) : (category === 'Currency' ? 'No' : market.optionB)}
                                     </span> share(s).
                                 </p>
                                 <div className="flex justify-end">
@@ -264,7 +258,7 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
                             // Amount input step
                             <div className="flex flex-col">
                                 <span className="text-xs text-gray-500 mb-1">
-                                    {`1 ${selectedOption === 'A' ? market.optionA : market.optionB} = 1 PREDICT`}
+                                    {`1 ${selectedOption === 'A' ? (category === 'Currency' ? 'Yes' : market.optionA) : (category === 'Currency' ? 'No' : market.optionB)} = 1 PREDICT`}
                                 </span>
                                 <div className="flex flex-col gap-1 mb-4">
                                     <div className="flex items-center gap-2 overflow-visible">
@@ -292,7 +286,7 @@ export function MarketBuyInterface({ marketId, market }: MarketBuyInterfaceProps
                                             />
                                         </div>
                                         <span className="font-bold whitespace-nowrap">
-                                            {selectedOption === 'A' ? market.optionA : market.optionB}
+                                            {selectedOption === 'A' ? (category === 'Currency' ? 'Yes' : market.optionA) : (category === 'Currency' ? 'No' : market.optionB)}
                                         </span>
                                     </div>
                                     <div className="min-h-[20px]">

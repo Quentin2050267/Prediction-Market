@@ -12,7 +12,7 @@ const MarketOutcome = {
 };
 
 // 配置需要解析的市场信息
-const marketId = 2; // 替换为要解析的 marketId
+const marketId = 0; // 替换为要解析的 marketId
 const outcome = MarketOutcome.OPTION_B; // 修改为 OPTION_A 或 OPTION_B
 
 async function main() {

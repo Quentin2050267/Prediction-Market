@@ -28,6 +28,16 @@ async function main() {
   console.log(`PredictionMarket deployed to: ${predictionMarketAddr}`);
   console.log(`You can verify on https://kairos.kaiascope.com/account/${predictionMarketAddr}`);
 
+  // Step 3: 部署 Oracle 合约
+  const Oracle = await ethers.getContractFactory("PredictionMarketCurrency");
+  const oracle = await Oracle.deploy(swanToken.getAddress());
+  await oracle.waitForDeployment();  // 等待部署完成
+  const oracleAddr = await oracle.getAddress(); 
+
+  console.log(`Oracle deployed to: ${oracleAddr}`);
+  console.log(`You can verify on https://kairos.kaiascope.com/account/${oracleAddr}`);
+
+
   console.log(`Congratulations! You have just successfully deployed the swan tokens and prediction market.`);
   console.log(`Please copy the SwanToken address and PredictionMarket address to ../frontend/src/constants/contracts.ts and .env`);
   // console.log(`You can verify on https://kairos.kaiascope.com/account/${sbtContract.target}`);

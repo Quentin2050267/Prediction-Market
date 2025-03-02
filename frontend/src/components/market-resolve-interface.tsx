@@ -1,0 +1,93 @@
+import { Button } from "./ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { prepareContractCall } from "thirdweb";
+import { useSendAndConfirmTransaction } from "thirdweb/react";
+import { oracleContract } from "@/constants/contract";
+
+interface MarketResolveInterfaceProps {
+    marketId: number;
+    endTime: bigint;
+}
+
+export function MarketResolveInterface({ marketId, endTime }: MarketResolveInterfaceProps) {
+    const [isConfirming, setIsConfirming] = useState(false);
+    const { toast } = useToast();
+    const { mutateAsync: mutateTransaction } = useSendAndConfirmTransaction();
+
+    const resolveMarket = async () => {
+        setIsConfirming(true);
+        try {
+            const tx = await prepareContractCall({
+                contract: oracleContract,
+                method: "function resolveMarket(uint256 marketId)",
+                params: [BigInt(marketId)],
+            });
+            await mutateTransaction(tx);
+            toast({
+                title: "Market Resolved",
+                description: "The market has been resolved",
+                duration: 5000, // 5 seconds
+            });
+        } catch (error) {
+            console.error(error);
+            // Optionally show error toast
+            toast({
+                title: "Resolve Market Error",
+                description: "There was an error resolving the market",
+                variant: "destructive",
+            });
+        } finally {
+            setIsConfirming(false);
+        }
+    };
+
+    useEffect(() => {
+        const resolveTime = new Date(Number(endTime) * 1000);
+        resolveTime.setHours(resolveTime.getHours() + 24);
+        const now = new Date();
+        const timeUntilResolve = resolveTime.getTime() - now.getTime();
+
+        if (timeUntilResolve > 0) {
+            const timer = setTimeout(() => {
+                resolveMarket();
+            }, timeUntilResolve);
+
+            return () => clearTimeout(timer);
+        }
+    }, [endTime]);
+
+    const handleResolve = () => {
+        setIsConfirming(true);
+        try {
+            const resolveTime = new Date(Number(endTime) * 1000);
+            resolveTime.setHours(resolveTime.getHours() + 24);
+            toast({
+                title: "Market Resolve Scheduled",
+                description: `The market will automatically resolve at ${resolveTime.toLocaleString()}.`,
+                duration: 5000, // 5 seconds
+            });
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: "Resolve Market Error",
+                description: "There was an error scheduling the market resolve",
+                variant: "destructive",
+            });
+        } finally {
+            setIsConfirming(false);
+        }
+    };
+
+    return (
+        <div className="flex items-center justify-center">
+            <Button
+                onClick={handleResolve}
+                disabled={isConfirming}
+                className="w-full"
+            >
+                {isConfirming ? "Scheduling..." : "Resolve Market"}
+            </Button>
+        </div>
+    );
+}
