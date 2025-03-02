@@ -101,7 +101,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         external {
         Market storage market = markets[_marketId];
         require(market.endTime > block.timestamp, "Market has ended");
-        require(_share > 0, "Amount must be greater than 0");
+        require(_share > 0, "Share must be greater than 0");
         require(!market.resolved, "Market has been resolved");
 
         uint256 currentDate = block.timestamp / 1 days;
@@ -133,6 +133,8 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
 
         uint256 shares = AMM.getShares(_marketId, _isOptionA, _amount);
 
+        uint256 currentDate = block.timestamp / 1 days;
+
         // pay
         require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
 
@@ -140,9 +142,11 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         if (_isOptionA) {
             market.optionASharesBalance[msg.sender] += shares;
             market.totalOptionAShares += shares;
+            market.optionAVotesByDate[currentDate] += _share;
         } else {
             market.optionBSharesBalance[msg.sender] += shares;
             market.totalOptionBShares += shares;
+            market.optionAVotesByDate[currentDate] += _share;
         }
 
         emit SharesPurchased(_marketId, msg.sender, _isOptionA, shares);
