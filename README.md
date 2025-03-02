@@ -42,18 +42,20 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
     PRIVATE_KEY="your_metamask_wallet_private_key"
     ```
 
-5. Deploy the prediction market contract and Swan Token (SWT) contract:
+5. Deploy the prediction market contract, Swan Token (SWT) contract and Oracle contract:
     ```bash
     npx hardhat run scripts/deploy.js --network kairos
     ```
-    **Please copy the addresses of these two contracts and paste them into `../frontend/src/constants/contracts.ts` and `.env` file.**
+    **Please copy the addresses of these contracts and paste them into `../frontend/src/constants/contracts.ts` and `.env` file.**
     ```bash
     PREDICTION_MARKET_CONTRACT_ADDRESS= "0x..."
     SWAN_TOKEN_CONTRACT_ADDRESS= "0x..."
+    ORACLE_CONTRACT_ADDRESS= "0x..."
     ```
 
-    There should be 5 entries in `.env`.
-   <img width="440" alt="image" src="https://github.com/user-attachments/assets/0eb711b6-64b9-46b1-9827-cdea579fcfe3" />
+    There should be 6 entries in `.env`.
+  <img width="627" alt="image" src="https://github.com/user-attachments/assets/f8ffefe0-f848-45e1-be08-7318430bec6a" />
+
 
 7. Configure `.env` file in the frontend directory:
     ```bash
@@ -80,4 +82,7 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
 ## Glimpse
 ![image](https://github.com/user-attachments/assets/f5aa7e17-9b78-4714-bed8-96102c8ab1dc)
 
-<img width="1470" alt="image" src="https://github.com/user-attachments/assets/313a1b31-0470-4a09-af89-cd7df9b0a1d9" />
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/143a10ba-c851-472e-9a81-4954db2a5044" />
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/cbff27d7-ee41-402e-85c2-75955b8023c6" />
+
+
