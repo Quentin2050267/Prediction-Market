@@ -101,7 +101,7 @@ export function VoteChart({ index, title, category }: VoteChartProps) {
         // );
 
         setVoteData(votes);
-    }, [index, startTime]);
+    }, [index, startTime, title]);
 
     return (
         <div className="w-full h-96 mb-12">
