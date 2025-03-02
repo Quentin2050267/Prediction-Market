@@ -53,7 +53,7 @@ contract AutomatedMarketMaker {
             costAfter = getCost(_marketId, qA, qB + _amount);
         }
 
-        return costAfter - costBefore; // 用户需要支付的成本
+        return costAfter - costBefore; // cost paid by user
     }
     
     function addLiquidity(uint256 _marketId, uint256 amountA, uint256 amountB) external {
