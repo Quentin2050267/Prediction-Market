@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import { IERC20 } from "@thirdweb-dev/contracts/eip/interface/IERC20.sol";
 import { Ownable } from "@thirdweb-dev/contracts/extension/Ownable.sol";
 import { ReentrancyGuard } from "@thirdweb-dev/contracts/external-deps/openzeppelin/security/ReentrancyGuard.sol";
+import "contracts/AMM.sol";
 
 contract PredictionMarket is Ownable, ReentrancyGuard {
     enum MarketOutcome {
@@ -31,6 +32,7 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
 
     IERC20 public swanToken;
     uint256 public marketCount;
+    AutomatedMarketMaker public AMM;
     mapping(uint256 => Market) public markets;
 
     event MarketCreated(
@@ -136,17 +138,17 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         uint256 currentDate = block.timestamp / 1 days;
 
         // pay
-        require(bettingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+        require(swanToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
 
         // record
         if (_isOptionA) {
             market.optionASharesBalance[msg.sender] += shares;
             market.totalOptionAShares += shares;
-            market.optionAVotesByDate[currentDate] += _share;
+            market.optionAVotesByDate[currentDate] += shares;
         } else {
             market.optionBSharesBalance[msg.sender] += shares;
             market.totalOptionBShares += shares;
-            market.optionAVotesByDate[currentDate] += _share;
+            market.optionAVotesByDate[currentDate] += shares;
         }
 
         emit SharesPurchased(_marketId, msg.sender, _isOptionA, shares);
