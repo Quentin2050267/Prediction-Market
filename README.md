@@ -13,17 +13,17 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository and create .env:
     ```bash
     git clone https://github.com/Quentin2050267/Prediction-Market.git
     cd Prediction-Market
+    touch .env
     ```
 
 2. Install dependencies:
     ```bash
     cd contract
     npm install
-    touch .env
     ```
 
 3. Create Thirdweb secret key:
@@ -46,22 +46,21 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
     ```bash
     npx hardhat run scripts/deploy.js --network kairos
     ```
-    **Please copy the addresses of these contracts and paste them into `../frontend/src/constants/contracts.ts` and `.env` file.**
+    **Please copy the addresses of these contracts and paste them into `.env` file.**
     ```bash
-    PREDICTION_MARKET_CONTRACT_ADDRESS= "0x..."
-    SWAN_TOKEN_CONTRACT_ADDRESS= "0x..."
-    ORACLE_CONTRACT_ADDRESS= "0x..."
+    NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT_ADDRESS= "0x..."
+    NEXT_PUBLIC_SWAN_TOKEN_CONTRACT_ADDRESS= "0x..."
+    NEXT_PUBLIC_ORACLE_CONTRACT_ADDRESS= "0x..."
     ```
 
     There should be 6 entries in `.env`.
   <img width="627" alt="image" src="https://github.com/user-attachments/assets/f8ffefe0-f848-45e1-be08-7318430bec6a" />
 
 
-7. Configure `.env` file in the frontend directory:
+7. npm install in the frontend directory:
     ```bash
     cd ../frontend
     npm install
-    touch .env
     ```
     Write the following into the `.env` file:
     ```bash
