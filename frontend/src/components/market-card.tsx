@@ -135,7 +135,7 @@ export function MarketCard({ index, filter, category, onClick }: MarketCardProps
     // Check if the market should be shown
     const shouldShow = () => {
         if (!market) return false;
-
+        
         switch (filter) {
             case 'active':
                 return !isExpired;
