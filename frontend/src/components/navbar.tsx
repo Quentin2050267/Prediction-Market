@@ -76,7 +76,10 @@ export function Navbar() {
 
   return (
     <div className="flex justify-between items-center mb-6">
-      <h1 className="text-2xl font-bold">Prediction Market</h1>
+      <div className="flex items-center gap-2">
+        <img src="/logo-black.svg" alt="Logo" className="h-8 w-8" />
+        <h1 className="text-2xl font-bold m-0">Swan³ Prediction Market</h1>
+      </div>
       <div className="items-center flex gap-2">
         {account && (
           <Button
