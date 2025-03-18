@@ -8,6 +8,7 @@ export const kaiaTestnet = defineChain({
     symbol: "KLAY",
     decimals: 18,
   },
-  rpc: process.env.KAIROS_TESTNET_URL || "", // Kaia Testnet 的 Public RPC Endpoint
+  // rpc: process.env.KAIROS_TESTNET_URL || "", // Kaia Testnet 的 Public RPC Endpoint
+  rpc: "https://public-en-kairos.node.kaia.io",
   testnet: true,
 });

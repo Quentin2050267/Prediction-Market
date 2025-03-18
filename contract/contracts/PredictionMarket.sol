@@ -4,8 +4,6 @@ pragma solidity ^0.8.9;
 import {IERC20} from "@thirdweb-dev/contracts/eip/interface/IERC20.sol";
 import {Ownable} from "@thirdweb-dev/contracts/extension/Ownable.sol";
 import {ReentrancyGuard} from "@thirdweb-dev/contracts/external-deps/openzeppelin/security/ReentrancyGuard.sol";
-// import "contracts/AMM.sol";
-import {AutomatedMarketMaker} from "./AMM.sol";
 
 contract PredictionMarket is Ownable, ReentrancyGuard {
     enum MarketOutcome {
@@ -33,7 +31,6 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
 
     IERC20 public swanToken;
     uint256 public marketCount;
-    AutomatedMarketMaker public AMM;
     mapping(uint256 => Market) public markets;
 
     event MarketCreated(
@@ -103,30 +100,30 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
     function buyShares(
         uint256 _marketId,
         bool _isOptionA,
-        uint256 _share
+        uint256 _amount
     ) external {
         Market storage market = markets[_marketId];
         require(market.endTime > block.timestamp, "Market has ended");
-        require(_share > 0, "Share must be greater than 0");
+        require(_amount > 0, "Amount must be greater than 0");
         require(!market.resolved, "Market has been resolved");
 
         uint256 currentDate = block.timestamp / 1 days;
 
         require(
-            swanToken.transferFrom(msg.sender, address(this), _share),
+            swanToken.transferFrom(msg.sender, address(this), _amount),
             "Transfer failed"
         );
         if (_isOptionA) {
-            market.optionASharesBalance[msg.sender] += _share;
-            market.totalOptionAShares += _share;
-            market.optionAVotesByDate[currentDate] += _share;
+            market.optionASharesBalance[msg.sender] += _amount;
+            market.totalOptionAShares += _amount;
+            market.optionAVotesByDate[currentDate] += _amount;
         } else {
-            market.optionBSharesBalance[msg.sender] += _share;
-            market.totalOptionBShares += _share;
-            market.optionBVotesByDate[currentDate] += _share;
+            market.optionBSharesBalance[msg.sender] += _amount;
+            market.totalOptionBShares += _amount;
+            market.optionBVotesByDate[currentDate] += _amount;
         }
 
-        emit SharesPurchased(_marketId, msg.sender, _isOptionA, _share);
+        emit SharesPurchased(_marketId, msg.sender, _isOptionA, _amount);
     }
 
     function getVotesByDate(
@@ -138,40 +135,6 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
             market.optionAVotesByDate[_date],
             market.optionBVotesByDate[_date]
         );
-    }
-
-    function buyByAmount(
-        uint256 _marketId,
-        bool _isOptionA,
-        uint256 _amount
-    ) external {
-        Market storage market = markets[_marketId];
-        require(market.endTime > block.timestamp, "Market has ended");
-        require(_amount > 0, "Amount must be greater than 0");
-        require(!market.resolved, "Market has been resolved");
-
-        uint256 shares = AMM.getShares(_marketId, _isOptionA, _amount);
-
-        uint256 currentDate = block.timestamp / 1 days;
-
-        // pay
-        require(
-            swanToken.transferFrom(msg.sender, address(this), _amount),
-            "Transfer failed"
-        );
-
-        // record
-        if (_isOptionA) {
-            market.optionASharesBalance[msg.sender] += shares;
-            market.totalOptionAShares += shares;
-            market.optionAVotesByDate[currentDate] += shares;
-        } else {
-            market.optionBSharesBalance[msg.sender] += shares;
-            market.totalOptionBShares += shares;
-            market.optionAVotesByDate[currentDate] += shares;
-        }
-
-        emit SharesPurchased(_marketId, msg.sender, _isOptionA, shares);
     }
 
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
