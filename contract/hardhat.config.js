@@ -3,9 +3,9 @@ require("@matterlabs/hardhat-zksync-verify");
 require("@nomicfoundation/hardhat-toolbox");
 require('dotenv').config();
 
-require('dotenv').config({
-  path: '../.env', // 指向最外层的 .env 文件
-});
+// require('dotenv').config({
+//   path: '../.env', // 指向最外层的 .env 文件
+// });
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -37,6 +37,7 @@ module.exports = {
     },
     kairos: {
       url: process.env.KAIROS_TESTNET_URL || "",
+      // url: "https://public-en-kairos.node.kaia.io",
       gasPrice: 250000000000,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],

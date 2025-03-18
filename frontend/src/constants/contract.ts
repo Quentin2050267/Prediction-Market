@@ -3,22 +3,10 @@ import { defineChain, getContract } from "thirdweb";
 import { base } from "thirdweb/chains";
 import { kaiaTestnet } from "@/chain.config";
 
-export const predictionMarketContractAddress =
-  process.env.NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT_ADDRESS ;
 
-export const tokenContractAddress =
-  process.env.NEXT_PUBLIC_SWAN_TOKEN_CONTRACT_ADDRESS ;
-
-export const oracleContractAddress =
-  process.env.NEXT_PUBLIC_ORACLE_CONTRACT_ADDRESS ;
-
-if (
-  !process.env.NEXT_PUBLIC_PREDICTION_MARKET_CONTRACT_ADDRESS ||
-  !process.env.NEXT_PUBLIC_SWAN_TOKEN_CONTRACT_ADDRESS ||
-  !process.env.NEXT_PUBLIC_ORACLE_CONTRACT_ADDRESS
-) {
-  console.warn("Some contract addresses are missing in environment variables");
-}
+export const predictionMarketContractAddress = "0xd736E96C8D8ac4E93a63BdF5FeDd03621619F10A";
+export const tokenContractAddress = "0x63A334F227487F6f7ED638D5b3C76d1587c31C01";
+export const oracleContractAddress = "0xDa5492322495d8a45f64d8bcE930c1d8fEdbf555";
 
 export const contract = getContract({
     client: client,
