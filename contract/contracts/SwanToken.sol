@@ -5,9 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SwanToken is ERC20, Ownable {
-    mapping(address => bool) public hasClaimed;
+    // mapping(address => bool) public hasClaimed;
+    mapping(address => uint256) public lastClaimedTime;
     uint256 public constant CLAIM_AMOUNT = 100 * 10 ** 18;
-    
+    uint256 public constant CLAIM_INTERVAL = 24 hours;
+
     event TokensClaimed(address indexed claimer, uint256 amount);
     event TokensMinted(address indexed to, uint256 amount);
     event TokensBurned(address indexed from, uint256 amount);
@@ -27,9 +29,19 @@ contract SwanToken is ERC20, Ownable {
     }
 
     function claim() external {
-        require(!hasClaimed[msg.sender], "Already claimed");
-        hasClaimed[msg.sender] = true;
-        _mint(msg.sender, CLAIM_AMOUNT);
-        emit TokensClaimed(msg.sender, CLAIM_AMOUNT);
+        require(
+            balanceOf(msg.sender) < CLAIM_AMOUNT,
+            "Balance is already 100 or more"
+        );
+        require(
+            block.timestamp >= lastClaimedTime[msg.sender] + CLAIM_INTERVAL,
+            "Claim only allowed once every 24 hours"
+        );
+
+        uint256 amountToMint = CLAIM_AMOUNT - balanceOf(msg.sender);
+        // hasClaimed[msg.sender] = true;
+        lastClaimedTime[msg.sender] = block.timestamp;
+        _mint(msg.sender, amountToMint);
+        emit TokensClaimed(msg.sender, amountToMint);
     }
 }

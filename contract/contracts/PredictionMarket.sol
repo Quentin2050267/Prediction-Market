@@ -137,6 +137,37 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
         );
     }
 
+    function getAllVotesByDate(
+        uint256 _marketId
+    )
+        external
+        view
+        returns (
+            uint256[] memory dates,
+            uint256[] memory optionAVotes,
+            uint256[] memory optionBVotes
+        )
+    {
+        Market storage market = markets[_marketId];
+        uint256 startTime = market.endTime - market.duration;
+        uint256 startDate = startTime / 1 days;
+        uint256 endDate = market.endTime / 1 days;
+        uint256 length = endDate - startDate + 1;
+
+        dates = new uint256[](length);
+        optionAVotes = new uint256[](length);
+        optionBVotes = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            uint256 date = startDate + i;
+            dates[i] = date;
+            optionAVotes[i] = market.optionAVotesByDate[date];
+            optionBVotes[i] = market.optionBVotesByDate[date];
+        }
+
+        return (dates, optionAVotes, optionBVotes);
+    }
+
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
         require(msg.sender == owner(), "Only owner can resolve markets");
         Market storage market = markets[_marketId];

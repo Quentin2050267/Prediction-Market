@@ -33,24 +33,23 @@ export function MarketResolveInterface({
     const price = await connection.getLatestPriceUpdates([priceFeedId]);
     const priceValue = price ? BigInt(price.parsed[0].price.price) : BigInt(0);
     let outcome = 0;
-    //   这里有可能位数不对
-    console.log(priceValue, targetPrice, operator);
+    // console.log(priceValue, targetPrice, operator);
     switch (operator) {
-      case 1:
+      case 0:
         if (priceValue > targetPrice) {
           outcome = 1;
         } else {
           outcome = 2;
         }
         break;
-      case 2:
+      case 1:
         if (priceValue < targetPrice) {
           outcome = 1;
         } else {
           outcome = 2;
         }
         break;
-      case 3:
+      case 2:
         if (priceValue == targetPrice) {
           outcome = 1;
         } else {
@@ -88,7 +87,10 @@ export function MarketResolveInterface({
 
   useEffect(() => {
     const resolveTime = new Date(Number(endTime) * 1000);
-    resolveTime.setHours(resolveTime.getHours() + 24);
+    // resolve in 24 hours
+    //   resolveTime.setHours(resolveTime.getHours() + 24);
+    //   resolve in 1 minute
+    resolveTime.setMinutes(resolveTime.getMinutes() + 1);
     const now = new Date();
     const timeUntilResolve = resolveTime.getTime() - now.getTime();
 

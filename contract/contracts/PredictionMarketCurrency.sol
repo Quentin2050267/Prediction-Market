@@ -149,43 +149,36 @@ contract PredictionMarketCurrency is Ownable, ReentrancyGuard {
         );
     }
 
-    // function resolveMarket(uint256 _marketId) external {
-    //     Market storage market = markets[_marketId];
-    //     require(market.endTime < block.timestamp, "Market has not ended");
-    //     require(
-    //         market.outcome == MarketOutcome.UNRESOLVED,
-    //         "Market is resolved"
-    //     );
+    function getAllVotesByDate(
+        uint256 _marketId
+    )
+        external
+        view
+        returns (
+            uint256[] memory dates,
+            uint256[] memory optionAVotes,
+            uint256[] memory optionBVotes
+        )
+    {
+        Market storage market = markets[_marketId];
+        uint256 startTime = market.endTime - market.duration;
+        uint256 startDate = startTime / 1 days;
+        uint256 endDate = market.endTime / 1 days;
+        uint256 length = endDate - startDate + 1;
 
-    //     // string memory marketPair = string(
-    //     //     abi.encodePacked(market.assetSymbol, "_usdt")
-    //     // );
-    //     // (int256 price, ) = sValueFeed.checkPrice(marketPair);
+        dates = new uint256[](length);
+        optionAVotes = new uint256[](length);
+        optionBVotes = new uint256[](length);
 
-    //     (int256 price, ) = sValueFeed.checkPrice(market.assetSymbol);
+        for (uint256 i = 0; i < length; i++) {
+            uint256 date = startDate + i;
+            dates[i] = date;
+            optionAVotes[i] = market.optionAVotesByDate[date];
+            optionBVotes[i] = market.optionBVotesByDate[date];
+        }
 
-    //     // Convert the price to 18 decimal places
-    //     uint256 adjustedPrice = uint256(price) * 1e10; // Assuming the price is in 8 decimal places
-
-    //     if (market.operator == ComparisonOperator.GREATER_THAN) {
-    //         market.outcome = (adjustedPrice > market.targetPrice)
-    //             ? MarketOutcome.OPTION_A
-    //             : MarketOutcome.OPTION_B;
-    //     } else if (market.operator == ComparisonOperator.LESS_THAN) {
-    //         market.outcome = (adjustedPrice < market.targetPrice)
-    //             ? MarketOutcome.OPTION_A
-    //             : MarketOutcome.OPTION_B;
-    //     } else if (market.operator == ComparisonOperator.EQUAL) {
-    //         market.outcome = (adjustedPrice == market.targetPrice)
-    //             ? MarketOutcome.OPTION_A
-    //             : MarketOutcome.OPTION_B;
-    //     } else {
-    //         revert("Invalid comparison operator");
-    //     }
-
-    //     market.resolved = true;
-    //     emit MarketResolved(_marketId, market.outcome);
-    // }
+        return (dates, optionAVotes, optionBVotes);
+    }
 
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
         // require(msg.sender == owner(), "Only owner can resolve markets");

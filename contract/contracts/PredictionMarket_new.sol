@@ -1,13 +1,14 @@
+// this file combines the AMM and PredictionMarket contracts for general markets
+// if you want to combine quandratic, please modify this file
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
 import {IERC20} from "@thirdweb-dev/contracts/eip/interface/IERC20.sol";
 import {Ownable} from "@thirdweb-dev/contracts/extension/Ownable.sol";
 import {ReentrancyGuard} from "@thirdweb-dev/contracts/external-deps/openzeppelin/security/ReentrancyGuard.sol";
-// import "contracts/AMM.sol";
 import {AutomatedMarketMaker} from "./AMM.sol";
 
-contract PredictionMarket is Ownable, ReentrancyGuard {
+contract PredictionMarketNew is Ownable, ReentrancyGuard {
     enum MarketOutcome {
         UNRESOLVED,
         OPTION_A,
@@ -138,6 +139,37 @@ contract PredictionMarket is Ownable, ReentrancyGuard {
             market.optionAVotesByDate[_date],
             market.optionBVotesByDate[_date]
         );
+    }
+
+    function getAllVotesByDate(
+        uint256 _marketId
+    )
+        external
+        view
+        returns (
+            uint256[] memory dates,
+            uint256[] memory optionAVotes,
+            uint256[] memory optionBVotes
+        )
+    {
+        Market storage market = markets[_marketId];
+        uint256 startTime = market.endTime - market.duration;
+        uint256 startDate = startTime / 1 days;
+        uint256 endDate = market.endTime / 1 days;
+        uint256 length = endDate - startDate + 1;
+
+        dates = new uint256[](length);
+        optionAVotes = new uint256[](length);
+        optionBVotes = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            uint256 date = startDate + i;
+            dates[i] = date;
+            optionAVotes[i] = market.optionAVotesByDate[date];
+            optionBVotes[i] = market.optionBVotesByDate[date];
+        }
+
+        return (dates, optionAVotes, optionBVotes);
     }
 
     function buyByAmount(

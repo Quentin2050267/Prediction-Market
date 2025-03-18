@@ -57,7 +57,8 @@ export function Navbar() {
       await sendTransaction(tx);
       toast({
         title: "Tokens Claimed!",
-        description: "Your tokens have been successfully claimed.",
+        description:
+          "Your tokens have been successfully claimed. Please refresh the page.",
         duration: 5000,
       });
     } catch (error) {

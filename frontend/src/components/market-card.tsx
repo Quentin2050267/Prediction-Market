@@ -178,7 +178,7 @@ export function MarketCard({
   const title =
     category === "Currency"
       ? `1 ${marketSymbol} ${operatorToSymbol(market?.operator)} ${Math.floor(
-          parseInt(toEther(market?.targetPrice))
+          parseInt(BigInt(market?.targetPrice) / BigInt(10 ** 8))
         )} ${quoteSymbol}?`
       : market?.question;
 
