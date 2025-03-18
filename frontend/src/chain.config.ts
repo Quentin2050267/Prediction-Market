@@ -12,3 +12,5 @@ export const kaiaTestnet = defineChain({
   rpc: "https://public-en-kairos.node.kaia.io",
   testnet: true,
 });
+
+console.log(kaiaTestnet);

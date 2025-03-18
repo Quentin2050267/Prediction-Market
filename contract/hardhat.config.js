@@ -38,6 +38,7 @@ module.exports = {
     kairos: {
       url: process.env.KAIROS_TESTNET_URL || "",
       // url: "https://public-en-kairos.node.kaia.io",
+      // url: "https://1001.rpc.thirdweb.com/${THIRDWEB_API_KEY}",
       gasPrice: 250000000000,
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
