@@ -82,7 +82,7 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
 ## Glimpse
 ![image](https://github.com/user-attachments/assets/f5aa7e17-9b78-4714-bed8-96102c8ab1dc)
 
-<img width="1470" alt="image" src="https://github.com/user-attachments/assets/143a10ba-c851-472e-9a81-4954db2a5044" />
-<img width="1470" alt="image" src="https://github.com/user-attachments/assets/cbff27d7-ee41-402e-85c2-75955b8023c6" />
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/3cc1ef95-07e9-4e8e-8eec-1e9e33e43777" />
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/c3d9ef25-64a6-4a44-bfb8-6d80de57d0cc" />
 
 
