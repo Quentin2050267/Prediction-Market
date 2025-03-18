@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast"
 import { prepareContractCall, readContract, toWei } from "thirdweb";
 import { contract, oracleContract } from "@/constants/contract";
 import { Loader2 } from "lucide-react";
+import { priceFeedIds } from '@/pricefeed/priceFeedIds';
 
 interface CreateCurrencyMarketDialogProps {
     isOpen: boolean;
@@ -13,8 +14,7 @@ interface CreateCurrencyMarketDialogProps {
 }
 
 export function CreateCurrencyMarketDialog({ isOpen, onOpenChange }: CreateCurrencyMarketDialogProps) {
-    const [baseCurrency, setBaseCurrency] = useState('');
-    const [quoteCurrency, setQuoteCurrency] = useState('');
+    const [assetSymbol, setAssetSymbol] = useState('');
     const [condition, setCondition] = useState('');
     const [targetPrice, setTargetPrice] = useState('');
     const [date, setDate] = useState('');
@@ -24,16 +24,15 @@ export function CreateCurrencyMarketDialog({ isOpen, onOpenChange }: CreateCurre
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
-        if (baseCurrency && quoteCurrency && condition && targetPrice && date) {
-            setSummary(`You are creating a market where 1 ${baseCurrency} ${condition} ${targetPrice} ${quoteCurrency} by ${new Date(date).toLocaleString()}`);
+        if (assetSymbol && condition && targetPrice && date) {
+            setSummary(`You are creating a market where ${assetSymbol} ${condition} ${targetPrice} by ${new Date(date).toLocaleString()}`);
         } else {
             setSummary('');
         }
-    }, [baseCurrency, quoteCurrency, condition, targetPrice, date]);
+    }, [assetSymbol, condition, targetPrice, date]);
 
     const handleCreateMarket = async () => {
         const duration = Math.floor(new Date(date).getTime() / 1000) - Math.floor(Date.now() / 1000);
-        const assetSymbol = (baseCurrency + '_' + quoteCurrency).toLowerCase();
         const num_condition = condition === '>' ? 1 : condition === '<' ? 2 : 3;
         setIsCreating(true);
         try {
@@ -63,8 +62,7 @@ export function CreateCurrencyMarketDialog({ isOpen, onOpenChange }: CreateCurre
             setIsCreating(false);
         }
 
-        setBaseCurrency('');
-        setQuoteCurrency('');
+        setAssetSymbol('');
         setCondition('');
         setTargetPrice('');
         setDate('');
@@ -82,59 +80,16 @@ export function CreateCurrencyMarketDialog({ isOpen, onOpenChange }: CreateCurre
                 </DialogHeader>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Base Currency:</label>
+                        <label className="block text-sm font-medium text-gray-700">Asset Symbol:</label>
                         <select
                             className="w-full p-2 border rounded"
-                            value={baseCurrency}
-                            onChange={(e) => setBaseCurrency(e.target.value)}
+                            value={assetSymbol}
+                            onChange={(e) => setAssetSymbol(e.target.value)}
                         >
-                            <option value="">Select Base Currency</option>
-                            <option value="BTC">BTC</option>
-                            <option value="ETH">ETH</option>
-                            <option value="LINK">LINK</option>
-                            <option value="DOGE">DOGE</option>
-                            <option value="BCH">BCH</option>
-                            <option value="AVAX">AVAX</option>
-                            <option value="DOT">DOT</option>
-                            <option value="AAVE">AAVE</option>
-                            <option value="UNI">UNI</option>
-                            <option value="LTC">LTC</option>
-                            <option value="SOL">SOL</option>
-                            <option value="MKR">MKR</option>
-                            <option value="COMP">COMP</option>
-                            <option value="SUSHI">SUSHI</option>
-                            <option value="XRP">XRP</option>
-                            <option value="TRX">TRX</option>
-                            <option value="ADA">ADA</option>
-                            <option value="ATOM">ATOM</option>
-                            <option value="BAT">BAT</option>
-                            <option value="SNX">SNX</option>
-                            <option value="FIL">FIL</option>
-                            <option value="EOS">EOS</option>
-                            <option value="ETC">ETC</option>
-                            <option value="ALGO">ALGO</option>
-                            <option value="CRV">CRV</option>
-                            <option value="ENJ">ENJ</option>
-                            <option value="MANA">MANA</option>
-                            <option value="XTZ">XTZ</option>
-                            <option value="OMG">OMG</option>
-                            <option value="REN">REN</option>
-                            <option value="XLM">XLM</option>
-                            <option value="RSR">RSR</option>
-                            <option value="NEO">NEO</option>
-                            {/* 添加其他基础货币 */}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Quote Currency:</label>
-                        <select
-                            className="w-full p-2 border rounded"
-                            value={quoteCurrency}
-                            onChange={(e) => setQuoteCurrency(e.target.value)}
-                        >
-                            <option value="">Select Quote Currency</option>
-                            {/* for now only support USDT Oracle query 😿 */}
-                            <option value="USDT">USDT</option>
+                            <option value="">Select Asset Symbol</option>
+                            {Object.keys(priceFeedIds).map((symbol) => (
+                                <option key={symbol} value={symbol}>{symbol}</option>
+                            ))}
                         </select>
                     </div>
                     <div>
@@ -176,7 +131,7 @@ export function CreateCurrencyMarketDialog({ isOpen, onOpenChange }: CreateCurre
                     )}
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleCreateMarket} disabled={!baseCurrency || !quoteCurrency || !condition || !targetPrice || !date || isCreating}>
+                    <Button onClick={handleCreateMarket} disabled={!assetSymbol || !condition || !targetPrice || !date || isCreating}>
                         {isCreating ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -194,7 +149,6 @@ export function CreateCurrencyMarketDialog({ isOpen, onOpenChange }: CreateCurre
         </Dialog>
     );
 }
-
 
 
 interface CreateGeneralMarketDialogProps {

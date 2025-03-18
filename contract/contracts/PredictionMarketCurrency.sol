@@ -138,11 +138,10 @@ contract PredictionMarketCurrency is Ownable, ReentrancyGuard {
         emit SharesPurchased(_marketId, msg.sender, _isOptionA, _amount);
     }
 
-    function getVotesByDate(uint256 _marketId, uint256 _date)
-        external
-        view
-        returns (uint256 optionAVotes, uint256 optionBVotes)
-    {
+    function getVotesByDate(
+        uint256 _marketId,
+        uint256 _date
+    ) external view returns (uint256 optionAVotes, uint256 optionBVotes) {
         Market storage market = markets[_marketId];
         return (
             market.optionAVotesByDate[_date],
@@ -150,40 +149,58 @@ contract PredictionMarketCurrency is Ownable, ReentrancyGuard {
         );
     }
 
-    function resolveMarket(uint256 _marketId) external {
+    // function resolveMarket(uint256 _marketId) external {
+    //     Market storage market = markets[_marketId];
+    //     require(market.endTime < block.timestamp, "Market has not ended");
+    //     require(
+    //         market.outcome == MarketOutcome.UNRESOLVED,
+    //         "Market is resolved"
+    //     );
+
+    //     // string memory marketPair = string(
+    //     //     abi.encodePacked(market.assetSymbol, "_usdt")
+    //     // );
+    //     // (int256 price, ) = sValueFeed.checkPrice(marketPair);
+
+    //     (int256 price, ) = sValueFeed.checkPrice(market.assetSymbol);
+
+    //     // Convert the price to 18 decimal places
+    //     uint256 adjustedPrice = uint256(price) * 1e10; // Assuming the price is in 8 decimal places
+
+    //     if (market.operator == ComparisonOperator.GREATER_THAN) {
+    //         market.outcome = (adjustedPrice > market.targetPrice)
+    //             ? MarketOutcome.OPTION_A
+    //             : MarketOutcome.OPTION_B;
+    //     } else if (market.operator == ComparisonOperator.LESS_THAN) {
+    //         market.outcome = (adjustedPrice < market.targetPrice)
+    //             ? MarketOutcome.OPTION_A
+    //             : MarketOutcome.OPTION_B;
+    //     } else if (market.operator == ComparisonOperator.EQUAL) {
+    //         market.outcome = (adjustedPrice == market.targetPrice)
+    //             ? MarketOutcome.OPTION_A
+    //             : MarketOutcome.OPTION_B;
+    //     } else {
+    //         revert("Invalid comparison operator");
+    //     }
+
+    //     market.resolved = true;
+    //     emit MarketResolved(_marketId, market.outcome);
+    // }
+
+    function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
+        // require(msg.sender == owner(), "Only owner can resolve markets");
         Market storage market = markets[_marketId];
         require(market.endTime < block.timestamp, "Market has not ended");
+        require(!market.resolved, "Market has already been resolved");
         require(
-            market.outcome == MarketOutcome.UNRESOLVED,
-            "Market is resolved"
+            _outcome != MarketOutcome.UNRESOLVED,
+            "Outcome cannot be unresolved"
         );
 
-        string memory marketPair = string(
-            abi.encodePacked(market.assetSymbol, "_USDT")
-        );
-        (int256 price, ) = sValueFeed.checkPrice(marketPair);
-
-        // Convert the price to 18 decimal places
-        uint256 adjustedPrice = uint256(price) * 1e10; // Assuming the price is in 8 decimal places
-
-        if (market.operator == ComparisonOperator.GREATER_THAN) {
-            market.outcome = (adjustedPrice > market.targetPrice)
-                ? MarketOutcome.OPTION_A
-                : MarketOutcome.OPTION_B;
-        } else if (market.operator == ComparisonOperator.LESS_THAN) {
-            market.outcome = (adjustedPrice < market.targetPrice)
-                ? MarketOutcome.OPTION_A
-                : MarketOutcome.OPTION_B;
-        } else if (market.operator == ComparisonOperator.EQUAL) {
-            market.outcome = (adjustedPrice == market.targetPrice)
-                ? MarketOutcome.OPTION_A
-                : MarketOutcome.OPTION_B;
-        } else {
-            revert("Invalid comparison operator");
-        }
-
+        market.outcome = _outcome;
         market.resolved = true;
-        emit MarketResolved(_marketId, market.outcome);
+
+        emit MarketResolved(_marketId, _outcome);
     }
 
     function claimWinnings(uint256 _marketId) external {
