@@ -38,7 +38,11 @@ const wallets = [
   createWallet("io.zerion.wallet"),
 ];
 
-export function Navbar() {
+interface NavbarProps {
+  toggleSidebar: () => void;
+}
+
+export function Navbar({ toggleSidebar }: NavbarProps) {
   const account = useActiveAccount();
   const [isClaimLoading, setIsClaimLoading] = useState(false);
   const { toast } = useToast();
@@ -81,6 +85,9 @@ export function Navbar() {
         <h1 className="text-2xl font-bold m-0">Swan³ Prediction Market</h1>
       </div>
       <div className="items-center flex gap-2">
+        <Button onClick={toggleSidebar} variant="outline">
+          Release Pool
+        </Button>
         {account && (
           <Button
             onClick={handleClaimTokens}

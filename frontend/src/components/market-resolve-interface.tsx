@@ -69,7 +69,7 @@ export function MarketResolveInterface({
       await mutateTransaction(tx);
       toast({
         title: "Market Resolved",
-        description: "The market has been resolved",
+        description: "The market has been resolved.",
         duration: 5000, // 5 seconds
       });
     } catch (error) {
@@ -77,7 +77,7 @@ export function MarketResolveInterface({
       // Optionally show error toast
       toast({
         title: "Resolve Market Error",
-        description: "There was an error resolving the market",
+        description: "There was an error resolving the market.",
         variant: "destructive",
       });
     } finally {
@@ -117,7 +117,7 @@ export function MarketResolveInterface({
       console.error(error);
       toast({
         title: "Resolve Market Error",
-        description: "There was an error scheduling the market resolve",
+        description: "There was an error scheduling the market resolve.",
         variant: "destructive",
       });
     } finally {

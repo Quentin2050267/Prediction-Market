@@ -177,15 +177,15 @@ export function MarketCard({
 
   const title =
     category === "Currency"
-      ? `1 ${marketSymbol} ${operatorToSymbol(market?.operator)} ${Math.floor(
-          parseInt(BigInt(market?.targetPrice) / BigInt(10 ** 8))
-        )} ${quoteSymbol}?`
+      ? `1 ${marketSymbol} ${operatorToSymbol(market?.operator)} ${
+          Number(market?.targetPrice) / 10 ** 8
+        } ${quoteSymbol}?`
       : market?.question;
 
   return (
     <Card
       key={index}
-      className="flex flex-col transition-colors duration-300 ease-in-out cursor-pointer hover:bg-gray-200"
+      className="flex flex-col transition-colors duration-300 ease-in-out hover:bg-gray-200"
       onClick={() => onClick(index, title)}
     >
       {isLoadingMarketData ? (
@@ -219,6 +219,10 @@ export function MarketCard({
                   optionA={category === "Currency" ? "Yes" : market.optionA}
                   optionB={category === "Currency" ? "No" : market.optionB}
                   category={category}
+                  canClaim={
+                    sharesBalance?.optionAShares !== BigInt(0) ||
+                    sharesBalance?.optionBShares !== BigInt(0)
+                  }
                 />
               ) : (
                 <>

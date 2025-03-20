@@ -9,10 +9,10 @@ import {
   DialogClose,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { useActiveAccount, useSendAndConfirmTransaction } from "thirdweb/react";
+import { useSendAndConfirmTransaction } from "thirdweb/react";
 import { useToast } from "@/hooks/use-toast";
-import { prepareContractCall, readContract, toWei } from "thirdweb";
-import { contract, oracleContract } from "@/constants/contract";
+import { prepareContractCall } from "thirdweb";
+import { oracleContract } from "@/constants/contract";
 import { Loader2 } from "lucide-react";
 import { priceFeedIds, getPriceFeedId } from "@/pricefeed/priceFeedIds";
 import { HermesClient } from "@pythnetwork/hermes-client";
@@ -34,7 +34,7 @@ export function CreateCurrencyMarketDialog({
   const { mutateAsync: mutateTransaction } = useSendAndConfirmTransaction();
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
-  const [currentPrice, setCurrentPrice] = useState<BigInt | null>(null);
+  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [baseCurrency, setBaseCurrency] = useState("");
   const [quoteCurrency, setQuoteCurrency] = useState("");
 
@@ -59,9 +59,7 @@ export function CreateCurrencyMarketDialog({
         const connection = new HermesClient("https://hermes.pyth.network", {});
         const priceFeedId = getPriceFeedId(assetSymbol);
         const price = await connection.getLatestPriceUpdates([priceFeedId]);
-        const priceValue = price
-          ? BigInt(price.parsed[0].price.price) / BigInt(10 ** 8)
-          : BigInt(0);
+        const priceValue = price ? price.parsed[0].price.price / 10 ** 8 : 0;
         setCurrentPrice(priceValue);
         const assetSymbols = assetSymbol?.split("/");
         setBaseCurrency(assetSymbols ? assetSymbols[0].toUpperCase() : "");
@@ -86,8 +84,7 @@ export function CreateCurrencyMarketDialog({
         params: [
           assetSymbol,
           num_condition,
-          //   toWei(targetPrice),
-          BigInt(targetPrice) * BigInt(10 ** 8),
+          BigInt(Math.floor(parseFloat(targetPrice) * 10 ** 8)),
           BigInt(duration),
         ],
       });
@@ -96,7 +93,8 @@ export function CreateCurrencyMarketDialog({
       // Show success toast
       toast({
         title: "Market Created",
-        description: "Your market has been created successfully",
+        description:
+          "Your market has been created successfully, please refresh the page.",
         duration: 5000, // 5 seconds
       });
     } catch (error) {
@@ -104,7 +102,7 @@ export function CreateCurrencyMarketDialog({
       // Optionally show error toast
       toast({
         title: "Create Market Error",
-        description: "There was an error creating the market",
+        description: "There was an error creating the market.",
         variant: "destructive",
       });
     } finally {
@@ -116,6 +114,17 @@ export function CreateCurrencyMarketDialog({
     setTargetPrice("");
     setDate("");
     onOpenChange(false);
+  };
+
+  // 获取当前日期和时间，并格式化为 datetime-local 输入字段所需的格式
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (
@@ -146,7 +155,7 @@ export function CreateCurrencyMarketDialog({
             </select>
             {currentPrice !== null && (
               <div className="text-sm text-gray-700">
-                Current Price: 1 {baseCurrency} = {currentPrice.toString()}{" "}
+                Current Price: 1 {baseCurrency} = {currentPrice.toFixed(8)}{" "}
                 {quoteCurrency}
               </div>
             )}
@@ -187,6 +196,7 @@ export function CreateCurrencyMarketDialog({
               className="w-full p-2 border rounded"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              min={getCurrentDateTime()} // 设置 min 属性为当前日期和时间
             />
           </div>
           {summary && <div className="text-sm text-gray-700">{summary}</div>}
@@ -263,7 +273,8 @@ export function CreateGeneralMarketDialog({
       // Show success toast
       toast({
         title: "Market Created",
-        description: "Your market has been created successfully",
+        description:
+          "Your market has been created successfully, please refresh the page.",
         duration: 5000, // 5 seconds
       });
     } catch (error) {
@@ -271,7 +282,7 @@ export function CreateGeneralMarketDialog({
       // Optionally show error toast
       toast({
         title: "Create Market Error",
-        description: "There was an error creating the market",
+        description: "There was an error creating the market.",
         variant: "destructive",
       });
     } finally {
@@ -283,6 +294,17 @@ export function CreateGeneralMarketDialog({
     setOptionB("");
     setDate("");
     onOpenChange(false);
+  };
+
+  // 获取当前日期和时间，并格式化为 datetime-local 输入字段所需的格式
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (
@@ -340,6 +362,7 @@ export function CreateGeneralMarketDialog({
               className="w-full p-2 border rounded"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              min={getCurrentDateTime()} // 设置 min 属性为当前日期和时间
             />
           </div>
           {summary && <div className="text-sm text-gray-700">{summary}</div>}
