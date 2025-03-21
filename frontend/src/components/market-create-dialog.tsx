@@ -155,7 +155,8 @@ export function CreateCurrencyMarketDialog({
         <DialogHeader>
           <DialogTitle>Create Currency Market</DialogTitle>
           <DialogDescription>
-            Fill in the details to create a new currency market.
+            Fill in the details to create a new currency market. The market will
+            go to the candidate pool before release.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
@@ -360,7 +361,8 @@ export function CreateGeneralMarketDialog({
         <DialogHeader>
           <DialogTitle>Create General Market</DialogTitle>
           <DialogDescription>
-            Fill in the details to create a new general market.
+            Fill in the details to create a new general market. The market will
+            go to the candidate pool before release.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">

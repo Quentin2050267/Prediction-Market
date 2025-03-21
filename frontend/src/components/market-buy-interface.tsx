@@ -50,14 +50,20 @@ export function MarketBuyInterface({
   // Add to state variables
   const [error, setError] = useState<string | null>(null);
 
-  // Update container height when content changes
+  // Update container height when content changes, including when amount changes
   useEffect(() => {
+    updateContainerHeight();
+  }, [isBuying, buyingStep, isVisible, error, amount]);
+
+  // Separate function to update container height
+  const updateContainerHeight = () => {
     if (contentRef.current) {
-      setTimeout(() => {
-        setContainerHeight(`${contentRef.current?.offsetHeight || 0}px`);
-      }, 0);
+      // Use requestAnimationFrame for more reliable layout calculations
+      requestAnimationFrame(() => {
+        setContainerHeight(`${contentRef.current?.scrollHeight || 0}px`);
+      });
     }
-  }, [isBuying, buyingStep, isVisible, error]);
+  };
 
   // Handlers for user interactions
   const handleBuy = (option: "A" | "B") => {
@@ -183,7 +189,7 @@ export function MarketBuyInterface({
   // Render the component
   return (
     <div
-      className="relative transition-[height] duration-200 ease-in-out overflow-hidden"
+      className="relative transition-[height] duration-300 ease-in-out overflow-hidden"
       style={{ height: containerHeight }}
     >
       <div
@@ -197,24 +203,36 @@ export function MarketBuyInterface({
           // Initial option selection buttons
           <div className="flex justify-between gap-4 mb-4">
             <Button
-              className="flex-1"
+              className={cn(
+                "flex-1 bg-green-600/30 hover:bg-green-700/50 text-green-900 hover:text-black border-2 border-green-500",
+                !account && "opacity-50 cursor-not-allowed"
+              )}
               onClick={() => handleBuy("A")}
               aria-label={`Vote ${
                 category === "Currency" ? "Yes" : market.optionA
               } for "${market.question}"`}
               disabled={!account}
+              variant="ghost"
             >
-              {category === "Currency" ? "Yes" : market.optionA}
+              <span className="font-bold ">
+                {category === "Currency" ? "Yes" : market.optionA}
+              </span>
             </Button>
             <Button
-              className="flex-1"
+              className={cn(
+                "flex-1 bg-red-600/30 hover:bg-red-700/50 text-red-900 hover:text-black border-2 border-red-500",
+                !account && "opacity-50 cursor-not-allowed"
+              )}
               onClick={() => handleBuy("B")}
               aria-label={`Vote ${
                 category === "Currency" ? "No" : market.optionB
               } for "${market.question}"`}
               disabled={!account}
+              variant="ghost"
             >
-              {category === "Currency" ? "No" : market.optionB}
+              <span className="font-bold">
+                {category === "Currency" ? "No" : market.optionB}
+              </span>
             </Button>
           </div>
         ) : (
@@ -222,7 +240,7 @@ export function MarketBuyInterface({
           <div className="flex flex-col mb-4">
             {buyingStep === "allowance" ? (
               // Approval step
-              <div className="flex flex-col border-2 border-gray-200 rounded-lg p-4">
+              <div className="flex flex-col border-2 border-gray-300 rounded-lg p-4">
                 <h2 className="text-lg font-bold mb-4">Approval Needed</h2>
                 <p className="mb-4">
                   You need to approve the transaction before proceeding.
@@ -254,11 +272,16 @@ export function MarketBuyInterface({
               </div>
             ) : buyingStep === "confirm" ? (
               // Confirmation step
-              <div className="flex flex-col border-2 border-gray-200 rounded-lg p-4">
+              <div className="flex flex-col border-2 border-gray-300 rounded-lg p-4">
                 <h2 className="text-lg font-bold mb-4">Confirm Transaction</h2>
                 <p className="mb-4">
                   You are about to buy{" "}
-                  <span className="font-bold">
+                  <span
+                    className={cn(
+                      "font-bold",
+                      selectedOption === "A" ? "text-green-700" : "text-red-700"
+                    )}
+                  >
                     {amount}{" "}
                     {selectedOption === "A"
                       ? category === "Currency"
@@ -270,6 +293,11 @@ export function MarketBuyInterface({
                   </span>{" "}
                   share(s).
                 </p>
+                <div className="text-xs text-gray-600 mb-4">
+                  You will spend{" "}
+                  <span className="font-bold">{amount} SWAN TOKEN</span> for
+                  this transaction.
+                </div>
                 <div className="flex justify-end">
                   <Button
                     onClick={handleConfirm}
@@ -297,7 +325,7 @@ export function MarketBuyInterface({
               </div>
             ) : (
               // Amount input step
-              <div className="flex flex-col">
+              <div className="flex flex-col border-2 border-gray-300 rounded-lg p-4">
                 <span className="text-xs text-gray-500 mb-1">
                   {`1 ${
                     selectedOption === "A"
@@ -307,9 +335,10 @@ export function MarketBuyInterface({
                       : category === "Currency"
                       ? "No"
                       : market.optionB
-                  } = 1 PREDICT`}
+                  } = 1 `}
+                  <span className="font-bold">SWAN TOKEN</span>
                 </span>
-                <div className="flex flex-col gap-1 mb-4">
+                <div className="flex flex-col gap-1 mb-2">
                   <div className="flex items-center gap-2 overflow-visible">
                     <div className="flex-grow relative">
                       <Input
@@ -330,11 +359,21 @@ export function MarketBuyInterface({
                         }}
                         className={cn(
                           "w-full",
-                          error && "border-red-500 focus-visible:ring-red-500"
+                          error && "border-red-500 focus-visible:ring-red-500",
+                          selectedOption === "A"
+                            ? "focus-visible:ring-green-500/50 focus-visible:border-green-500"
+                            : "focus-visible:ring-red-500/50 focus-visible:border-red-500"
                         )}
                       />
                     </div>
-                    <span className="font-bold whitespace-nowrap">
+                    <span
+                      className={cn(
+                        "font-bold whitespace-nowrap text-base",
+                        selectedOption === "A"
+                          ? "text-green-700"
+                          : "text-red-700"
+                      )}
+                    >
                       {selectedOption === "A"
                         ? category === "Currency"
                           ? "Yes"
@@ -344,20 +383,33 @@ export function MarketBuyInterface({
                         : market.optionB}
                     </span>
                   </div>
-                  <div className="min-h-[20px]">
+
+                  {/* Token requirement message */}
+                  <div className="min-h-[1.5rem]">
+                    {amount > 0 && (
+                      <div className="text-xs text-gray-600 mt-1">
+                        You need{" "}
+                        <span className="font-bold">{amount} SWAN TOKEN</span>{" "}
+                        for this transaction
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Error message */}
+                  <div className="min-h-[1.5rem]">
                     {error && (
                       <span className="text-sm text-red-500">{error}</span>
                     )}
                   </div>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <Button onClick={checkApproval} className="flex-1">
+                  <Button onClick={checkApproval} className="flex-1 font-bold">
                     Confirm
                   </Button>
                   <Button
                     onClick={handleCancel}
-                    variant="outline"
                     className="flex-1"
+                    variant="outline"
                   >
                     Cancel
                   </Button>

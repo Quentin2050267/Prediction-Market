@@ -16,20 +16,17 @@ import { MarketBuyInterface } from "./market-buy-interface";
 import { MarketSharesDisplay } from "./market-shares-display";
 import { MarketResolveInterface } from "./market-resolve-interface";
 import { toEther } from "thirdweb";
-import { HelpCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 
-// Props for the MarketCard component
-// index is the market id
-// filter is the filter to apply to the market
-// category is the category of the market
 interface MarketCardProps {
   index: number;
   filter: "active" | "pending" | "resolved";
   category: "Currency" | "General";
-  onClick: (index: number, title: string) => void; // 修改 onClick 属性
+  onClick: (index: number, title: string) => void;
+  onTitleLoad?: (title: string) => void;
+  onStatusChange?: (status: "active" | "pending" | "resolved") => void;
 }
 
-// Interface for the currency market data
 interface CurrencyMarket {
   assetSymbol: string;
   operator: number;
@@ -60,7 +57,6 @@ const operatorToSymbol = (operator: number): string => {
   }
 };
 
-// Interface for the general market data
 interface GeneralMarket {
   question: string;
   endTime: bigint;
@@ -72,7 +68,6 @@ interface GeneralMarket {
   resolved: boolean;
 }
 
-// Interface for the shares balance
 interface SharesBalance {
   optionAShares: bigint;
   optionBShares: bigint;
@@ -83,9 +78,13 @@ export function MarketCard({
   filter,
   category,
   onClick,
+  onTitleLoad,
+  onStatusChange,
 }: MarketCardProps) {
   // Get the active account
   const account = useActiveAccount();
+  const [title, setTitle] = useState<string>("");
+  const [shouldRender, setShouldRender] = useState(true);
 
   // Determine the contract and method to use based on the category
   const contractToUse = category === "Currency" ? oracleContract : contract;
@@ -144,42 +143,85 @@ export function MarketCard({
       }
     : undefined;
 
-  // Check if the market is expired
-  const isExpired = new Date(Number(market?.endTime) * 1000) < new Date();
-  // Check if the market is resolved
-  const isResolved = market?.resolved;
+  // 计算市场标题
+  useEffect(() => {
+    if (marketData) {
+      let marketTitle = "";
 
-  // Check if the market should be shown
-  const shouldShow = () => {
-    if (!market) return false;
+      if (category === "Currency") {
+        const assetSymbols = market?.assetSymbol?.split("/");
+        const marketSymbol = assetSymbols ? assetSymbols[0].toUpperCase() : "";
+        const quoteSymbol = assetSymbols ? assetSymbols[1].toUpperCase() : "";
+
+        marketTitle = `1 ${marketSymbol} ${operatorToSymbol(
+          market?.operator
+        )} ${Number(market?.targetPrice) / 10 ** 8} ${quoteSymbol}?`;
+      } else {
+        marketTitle = (market as GeneralMarket)?.question || "";
+      }
+
+      setTitle(marketTitle);
+
+      // 通知父组件标题已加载
+      if (onTitleLoad && marketTitle) {
+        onTitleLoad(marketTitle);
+      }
+    }
+  }, [marketData, category, market, onTitleLoad]);
+
+  // 检查卡片是否应该显示，并通知父组件市场状态
+  useEffect(() => {
+    if (!market) {
+      setShouldRender(false);
+      return;
+    }
+
+    // Check if the market is expired
+    const isExpired = new Date(Number(market.endTime) * 1000) < new Date();
+    // Check if the market is resolved
+    const isResolved = market.resolved;
+
+    // 确定市场状态
+    let status: "active" | "pending" | "resolved";
+    if (!isExpired) {
+      status = "active";
+    } else if (isExpired && !isResolved) {
+      status = "pending";
+    } else {
+      status = "resolved";
+    }
+
+    // 通知父组件状态变化
+    if (onStatusChange) {
+      onStatusChange(status);
+    }
 
     switch (filter) {
       case "active":
-        return !isExpired;
+        setShouldRender(!isExpired);
+        break;
       case "pending":
-        return isExpired && !isResolved;
+        setShouldRender(isExpired && !isResolved);
+        break;
       case "resolved":
-        return isExpired && isResolved;
+        setShouldRender(isExpired && isResolved);
+        break;
       default:
-        return true;
+        setShouldRender(true);
     }
-  };
+  }, [market, filter, onStatusChange]);
 
-  // If the market should not be shown, return null
-  if (!shouldShow()) {
+  // 如果不应该渲染，返回 null
+  if (!shouldRender) {
     return null;
   }
 
-  const assetSymbols = market?.assetSymbol?.split("/");
-  const marketSymbol = assetSymbols ? assetSymbols[0].toUpperCase() : "";
-  const quoteSymbol = assetSymbols ? assetSymbols[1].toUpperCase() : "";
-
-  const title =
-    category === "Currency"
-      ? `1 ${marketSymbol} ${operatorToSymbol(market?.operator)} ${
-          Number(market?.targetPrice) / 10 ** 8
-        } ${quoteSymbol}?`
-      : market?.question;
+  // Check if the market is expired
+  const isExpired = market
+    ? new Date(Number(market.endTime) * 1000) < new Date()
+    : false;
+  // Check if the market is resolved
+  const isResolved = market ? market.resolved : false;
 
   return (
     <Card
@@ -200,7 +242,7 @@ export function MarketCard({
               />
             )}
             <CardTitle className="flex items-center">
-              <HelpCircle className="mr-2 h-5 w-5 text-primary" />
+              {/* <HelpCircle className="mr-2 h-5 w-5 text-primary" /> */}
               {title}
             </CardTitle>
           </CardHeader>
@@ -213,13 +255,21 @@ export function MarketCard({
                 totalOptionBShares={market.totalOptionBShares}
               />
             )}
-            {new Date(Number(market?.endTime) * 1000) < new Date() ? (
-              market?.resolved ? (
+            {isExpired ? (
+              isResolved ? (
                 <MarketResolved
                   marketId={index}
-                  outcome={market.outcome}
-                  optionA={category === "Currency" ? "Yes" : market.optionA}
-                  optionB={category === "Currency" ? "No" : market.optionB}
+                  outcome={market!.outcome}
+                  optionA={
+                    category === "Currency"
+                      ? "Yes"
+                      : (market as GeneralMarket).optionA
+                  }
+                  optionB={
+                    category === "Currency"
+                      ? "No"
+                      : (market as GeneralMarket).optionB
+                  }
                   category={category}
                   canClaim={
                     sharesBalance?.optionAShares !== BigInt(0) ||
@@ -231,10 +281,10 @@ export function MarketCard({
                   {category === "Currency" ? (
                     <MarketResolveInterface
                       marketId={index}
-                      endTime={market?.endTime}
-                      assetSymbol={market?.assetSymbol}
-                      operator={market?.operator}
-                      targetPrice={market?.targetPrice}
+                      endTime={market!.endTime}
+                      assetSymbol={(market as CurrencyMarket).assetSymbol}
+                      operator={(market as CurrencyMarket).operator}
+                      targetPrice={(market as CurrencyMarket).targetPrice}
                     />
                   ) : (
                     <MarketPending />
@@ -242,11 +292,13 @@ export function MarketCard({
                 </>
               )
             ) : (
-              <MarketBuyInterface
-                marketId={index}
-                market={market!}
-                category={category}
-              />
+              market && (
+                <MarketBuyInterface
+                  marketId={index}
+                  market={market}
+                  category={category}
+                />
+              )
             )}
           </CardContent>
           <CardFooter>

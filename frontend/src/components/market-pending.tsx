@@ -18,8 +18,8 @@ export function MarketPending() {
     <div className="flex flex-col gap-2">
       <Button
         onClick={handleContactDeployer}
-        variant="outline"
-        className="mb-2 bg-yellow-200 p-2 rounded-md text-center text-xs flex items-center justify-center"
+        variant="ghost"
+        className="mb-2 bg-yellow-100 hover:bg-yellow-200 p-2 rounded-md text-center text-xs flex items-center justify-center text-black border-none shadow-none"
       >
         <Clock className="mr-2 h-4 w-4 text-yellow-600" />
         Pending resolution

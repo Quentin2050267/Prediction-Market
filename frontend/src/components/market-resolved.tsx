@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MarketResolvedProps {
   marketId: number;
@@ -29,6 +30,8 @@ export function MarketResolved({
   const contractToUse = category === "Currency" ? oracleContract : contract;
   const [isClaimLoading, setIsClaimLoading] = useState(false);
   const { toast } = useToast();
+
+  const isOptionA = outcome === 1;
 
   const handleClaimRewards = async () => {
     setIsClaimLoading(true);
@@ -60,13 +63,29 @@ export function MarketResolved({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="mb-2 bg-green-200 p-2 rounded-md text-center text-xs flex items-center justify-center">
-        <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-        Resolved: {outcome === 1 ? optionA : optionB}
+      <div
+        className={cn(
+          "mb-2 p-2 rounded-md text-center text-xs flex items-center justify-center",
+          isOptionA
+            ? "bg-green-600/30 text-green-900 "
+            : "bg-red-600/30 text-red-900 "
+        )}
+      >
+        <CheckCircle
+          className={cn(
+            "mr-1 h-4 w-4",
+            isOptionA ? "text-green-700" : "text-red-700"
+          )}
+        />
+        Resolved: {isOptionA ? optionA : optionB}
       </div>
       <Button
         variant="outline"
-        className="w-full cursor-pointer"
+        className={cn(
+          "w-full cursor-pointer",
+          canClaim &&
+            "border-2 border-yellow-500 bg-yellow-600/30 text-yellow-900 hover:bg-yellow-700/50 hover:text-black"
+        )}
         onClick={handleClaimRewards}
         disabled={isClaimLoading || !canClaim}
       >
@@ -77,7 +96,7 @@ export function MarketResolved({
           </>
         ) : canClaim ? (
           <>
-            <Trophy className="mr-2 h-4 w-4" />
+            <Trophy className="mr-2 h-4 w-4 text-yellow-700" />
             Claim Rewards
           </>
         ) : (

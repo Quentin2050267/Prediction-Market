@@ -127,13 +127,12 @@ export function MarketResolveInterface({
   };
 
   return (
-    // <div className="flex items-center justify-center">
     <div className="flex flex-col gap-2">
       <Button
         onClick={handleResolve}
         disabled={isConfirming}
-        variant="outline"
-        className="mb-2 bg-yellow-200 p-2 rounded-md text-center text-xs flex items-center justify-center"
+        variant="ghost"
+        className="mb-2 bg-yellow-100 hover:bg-yellow-200 p-2 rounded-md text-center text-xs flex items-center justify-center text-black border-none shadow-none"
       >
         {isConfirming ? (
           <>
