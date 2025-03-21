@@ -16,6 +16,7 @@ import { MarketBuyInterface } from "./market-buy-interface";
 import { MarketSharesDisplay } from "./market-shares-display";
 import { MarketResolveInterface } from "./market-resolve-interface";
 import { toEther } from "thirdweb";
+import { HelpCircle } from "lucide-react";
 
 // Props for the MarketCard component
 // index is the market id
@@ -135,8 +136,6 @@ export function MarketCard({
     params: [BigInt(index), account?.address as string],
   });
 
-  console.log(sharesBalanceData);
-
   // Parse the shares balance
   const sharesBalance: SharesBalance | undefined = sharesBalanceData
     ? {
@@ -200,7 +199,10 @@ export function MarketCard({
                 isResolved={isResolved}
               />
             )}
-            <CardTitle>{title}</CardTitle>
+            <CardTitle className="flex items-center">
+              <HelpCircle className="mr-2 h-5 w-5 text-primary" />
+              {title}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {market && (

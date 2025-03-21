@@ -6,6 +6,7 @@ import { useSendAndConfirmTransaction } from "thirdweb/react";
 import { oracleContract } from "@/constants/contract";
 import { HermesClient } from "@pythnetwork/hermes-client";
 import { getPriceFeedId } from "@/pricefeed/priceFeedIds";
+import { Clock, Loader2 } from "lucide-react";
 
 interface MarketResolveInterfaceProps {
   marketId: number;
@@ -131,11 +132,20 @@ export function MarketResolveInterface({
       <Button
         onClick={handleResolve}
         disabled={isConfirming}
-        // className="w-full"
         variant="outline"
-        className="mb-2 bg-yellow-200 p-2 rounded-md text-center text-xs"
+        className="mb-2 bg-yellow-200 p-2 rounded-md text-center text-xs flex items-center justify-center"
       >
-        {isConfirming ? "Scheduling..." : "Pending Resolution"}
+        {isConfirming ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 text-yellow-600 animate-spin" />
+            Scheduling...
+          </>
+        ) : (
+          <>
+            <Clock className="mr-2 h-4 w-4 text-yellow-600" />
+            Pending Resolution
+          </>
+        )}
       </Button>
     </div>
   );

@@ -12,10 +12,29 @@ import { Button } from "./ui/button";
 import { useSendAndConfirmTransaction } from "thirdweb/react";
 import { useToast } from "@/hooks/use-toast";
 import { prepareContractCall } from "thirdweb";
-import { oracleContract } from "@/constants/contract";
-import { Loader2 } from "lucide-react";
+import { contract, oracleContract } from "@/constants/contract";
+import { Loader2, CalendarIcon } from "lucide-react";
 import { priceFeedIds, getPriceFeedId } from "@/pricefeed/priceFeedIds";
 import { HermesClient } from "@pythnetwork/hermes-client";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from "@/components/ui/select";
 
 interface CreateCurrencyMarketDialogProps {
   isOpen: boolean;
@@ -29,7 +48,7 @@ export function CreateCurrencyMarketDialog({
   const [assetSymbol, setAssetSymbol] = useState("");
   const [condition, setCondition] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [summary, setSummary] = useState("");
   const { mutateAsync: mutateTransaction } = useSendAndConfirmTransaction();
   const { toast } = useToast();
@@ -44,9 +63,7 @@ export function CreateCurrencyMarketDialog({
       const marketSymbol = assetSymbols ? assetSymbols[0].toUpperCase() : "";
       const quoteSymbol = assetSymbols ? assetSymbols[1].toUpperCase() : "";
       setSummary(
-        `You are creating a market where 1 ${marketSymbol} ${condition} ${targetPrice} ${quoteSymbol} by ${new Date(
-          date
-        ).toLocaleString()}`
+        `You are creating a market where 1 ${marketSymbol} ${condition} ${targetPrice} ${quoteSymbol} by ${date.toLocaleString()}`
       );
     } else {
       setSummary("");
@@ -70,10 +87,18 @@ export function CreateCurrencyMarketDialog({
     fetchPrice();
   }, [assetSymbol]);
 
+  const resetForm = () => {
+    setAssetSymbol("");
+    setCondition("");
+    setTargetPrice("");
+    setDate(undefined);
+  };
+
   const handleCreateMarket = async () => {
+    if (!date) return;
+
     const duration =
-      Math.floor(new Date(date).getTime() / 1000) -
-      Math.floor(Date.now() / 1000);
+      Math.floor(date.getTime() / 1000) - Math.floor(Date.now() / 1000);
     const num_condition = condition === ">" ? 0 : condition === "<" ? 1 : 2;
     setIsCreating(true);
     try {
@@ -109,26 +134,23 @@ export function CreateCurrencyMarketDialog({
       setIsCreating(false);
     }
 
-    setAssetSymbol("");
-    setCondition("");
-    setTargetPrice("");
-    setDate("");
+    resetForm();
     onOpenChange(false);
   };
 
-  // 获取当前日期和时间，并格式化为 datetime-local 输入字段所需的格式
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  const handleCancel = () => {
+    resetForm();
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) resetForm();
+        onOpenChange(open);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Currency Market</DialogTitle>
@@ -136,70 +158,92 @@ export function CreateCurrencyMarketDialog({
             Fill in the details to create a new currency market.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Asset Symbol:
-            </label>
-            <select
-              className="w-full p-2 border rounded"
-              value={assetSymbol}
-              onChange={(e) => setAssetSymbol(e.target.value)}
-            >
-              <option value="">Select Asset Symbol</option>
-              {Object.keys(priceFeedIds).map((symbol) => (
-                <option key={symbol} value={symbol}>
-                  {symbol}
-                </option>
-              ))}
-            </select>
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="assetSymbol">Asset Symbol</Label>
+            <Select value={assetSymbol} onValueChange={setAssetSymbol}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Asset Symbol" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Available Pairs</SelectLabel>
+                  {Object.keys(priceFeedIds).map((symbol) => (
+                    <SelectItem key={symbol} value={symbol}>
+                      {symbol}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             {currentPrice !== null && (
-              <div className="text-sm text-gray-700">
+              <p className="text-sm text-muted-foreground">
                 Current Price: 1 {baseCurrency} = {currentPrice.toFixed(8)}{" "}
                 {quoteCurrency}
-              </div>
+              </p>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Condition:
-            </label>
-            <select
-              className="w-full p-2 border rounded"
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-            >
-              <option value="">Select Condition</option>
-              <option value=">">{">"}</option>
-              <option value="<">{"<"}</option>
-              <option value="=">{"="}</option>
-            </select>
+
+          <div className="grid gap-2">
+            <Label htmlFor="condition">Condition</Label>
+            <Select value={condition} onValueChange={setCondition}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select Condition" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Comparison</SelectLabel>
+                  <SelectItem value=">">Greater than (&gt;)</SelectItem>
+                  <SelectItem value="<">Less than (&lt;)</SelectItem>
+                  <SelectItem value="=">Equal to (=)</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Target Price:
-            </label>
-            <input
+
+          <div className="grid gap-2">
+            <Label htmlFor="targetPrice">Target Price</Label>
+            <Input
+              id="targetPrice"
               type="number"
               placeholder="e.g., 50000"
-              className="w-full p-2 border rounded"
               value={targetPrice}
               onChange={(e) => setTargetPrice(e.target.value)}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              On:
-            </label>
-            <input
-              type="datetime-local"
-              className="w-full p-2 border rounded"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              min={getCurrentDateTime()} // 设置 min 属性为当前日期和时间
-            />
+
+          <div className="grid gap-2">
+            <Label>Market Resolution Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                  disabled={(date) => date < new Date()}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
-          {summary && <div className="text-sm text-gray-700">{summary}</div>}
+
+          {summary && (
+            <div className="rounded-md bg-muted p-3">
+              <p className="text-sm text-muted-foreground">{summary}</p>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button
@@ -217,9 +261,9 @@ export function CreateCurrencyMarketDialog({
               "Create"
             )}
           </Button>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -238,7 +282,7 @@ export function CreateGeneralMarketDialog({
   const [question, setQuestion] = useState("");
   const [optionA, setOptionA] = useState("");
   const [optionB, setOptionB] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [summary, setSummary] = useState("");
   const { mutateAsync: mutateTransaction } = useSendAndConfirmTransaction();
   const { toast } = useToast();
@@ -247,19 +291,25 @@ export function CreateGeneralMarketDialog({
   useEffect(() => {
     if (question && optionA && optionB && date) {
       setSummary(
-        `You are creating a market with the question: "${question}" and options: "${optionA}" and "${optionB}" by ${new Date(
-          date
-        ).toLocaleString()}`
+        `You are creating a market with the question: "${question}" and options: "${optionA}" and "${optionB}" by ${date.toLocaleString()}`
       );
     } else {
       setSummary("");
     }
   }, [question, optionA, optionB, date]);
 
+  const resetForm = () => {
+    setQuestion("");
+    setOptionA("");
+    setOptionB("");
+    setDate(undefined);
+  };
+
   const handleCreateMarket = async () => {
+    if (!date) return;
+
     const duration =
-      Math.floor(new Date(date).getTime() / 1000) -
-      Math.floor(Date.now() / 1000);
+      Math.floor(date.getTime() / 1000) - Math.floor(Date.now() / 1000);
     setIsCreating(true);
     try {
       const tx = await prepareContractCall({
@@ -289,26 +339,23 @@ export function CreateGeneralMarketDialog({
       setIsCreating(false);
     }
 
-    setQuestion("");
-    setOptionA("");
-    setOptionB("");
-    setDate("");
+    resetForm();
     onOpenChange(false);
   };
 
-  // 获取当前日期和时间，并格式化为 datetime-local 输入字段所需的格式
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  const handleCancel = () => {
+    resetForm();
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) resetForm();
+        onOpenChange(open);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create General Market</DialogTitle>
@@ -316,56 +363,72 @@ export function CreateGeneralMarketDialog({
             Fill in the details to create a new general market.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Question:
-            </label>
-            <input
+        <div className="flex flex-col gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="question">Question</Label>
+            <Input
+              id="question"
               type="text"
               placeholder="e.g., Will it rain tomorrow?"
-              className="w-full p-2 border rounded"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Option A:
-            </label>
-            <input
+
+          <div className="grid gap-2">
+            <Label htmlFor="optionA">Option A</Label>
+            <Input
+              id="optionA"
               type="text"
               placeholder="e.g., Yes"
-              className="w-full p-2 border rounded"
               value={optionA}
               onChange={(e) => setOptionA(e.target.value)}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Option B:
-            </label>
-            <input
+
+          <div className="grid gap-2">
+            <Label htmlFor="optionB">Option B</Label>
+            <Input
+              id="optionB"
               type="text"
               placeholder="e.g., No"
-              className="w-full p-2 border rounded"
               value={optionB}
               onChange={(e) => setOptionB(e.target.value)}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              On:
-            </label>
-            <input
-              type="datetime-local"
-              className="w-full p-2 border rounded"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              min={getCurrentDateTime()} // 设置 min 属性为当前日期和时间
-            />
+
+          <div className="grid gap-2">
+            <Label>Market Resolution Date</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                  disabled={(date) => date < new Date()}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
-          {summary && <div className="text-sm text-gray-700">{summary}</div>}
+
+          {summary && (
+            <div className="rounded-md bg-muted p-3">
+              <p className="text-sm text-muted-foreground">{summary}</p>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button
@@ -381,9 +444,9 @@ export function CreateGeneralMarketDialog({
               "Create"
             )}
           </Button>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

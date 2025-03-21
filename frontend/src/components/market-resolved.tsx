@@ -5,6 +5,7 @@ import { contract, oracleContract } from "@/constants/contract";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Trophy, CheckCircle } from "lucide-react";
 
 interface MarketResolvedProps {
   marketId: number;
@@ -59,7 +60,8 @@ export function MarketResolved({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="mb-2 bg-green-200 p-2 rounded-md text-center text-xs">
+      <div className="mb-2 bg-green-200 p-2 rounded-md text-center text-xs flex items-center justify-center">
+        <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
         Resolved: {outcome === 1 ? optionA : optionB}
       </div>
       <Button
@@ -74,9 +76,12 @@ export function MarketResolved({
             Claiming...
           </>
         ) : canClaim ? (
-          "Claim Rewards"
+          <>
+            <Trophy className="mr-2 h-4 w-4" />
+            Claim Rewards
+          </>
         ) : (
-          "No Rewards to Claim"
+          <>No Rewards to Claim</>
         )}
       </Button>
     </div>

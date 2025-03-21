@@ -1,132 +1,102 @@
-"use client";
-
+import React, { useState } from "react";
 import {
-  ConnectButton,
-  lightTheme,
-  useActiveAccount,
-  useSendAndConfirmTransaction,
-} from "thirdweb/react";
-import { prepareContractCall } from "thirdweb";
-import { client } from "@/app/client";
-import { kaiaTestnet } from "@/chain.config";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { inAppWallet, createWallet } from "thirdweb/wallets";
-import { tokenContract, tokenContractAddress } from "@/constants/contract";
-
-const wallets = [
-  inAppWallet({
-    auth: {
-      options: [
-        "google",
-        "email",
-        "passkey",
-        "phone",
-        "github",
-        "apple",
-        "facebook",
-        "line",
-      ],
-    },
-  }),
-  createWallet("io.metamask"),
-  createWallet("com.coinbase.wallet"),
-  createWallet("me.rainbow"),
-  createWallet("io.rabby"),
-  createWallet("io.zerion.wallet"),
-];
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+} from "./ui/dropdown-menu";
+import {
+  CreateCurrencyMarketDialog,
+  CreateGeneralMarketDialog,
+} from "./market-create-dialog";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import {
+  PlusIcon,
+  ChevronDownIcon,
+  DollarSignIcon,
+  GlobeIcon,
+  BarChartIcon,
+  TrendingUpIcon,
+  MessagesSquareIcon,
+  NewspaperIcon,
+} from "lucide-react";
 
 interface NavbarProps {
-  toggleSidebar: () => void;
+  category: "Currency" | "General";
+  setCategory: (category: "Currency" | "General") => void;
 }
 
-export function Navbar({ toggleSidebar }: NavbarProps) {
-  const account = useActiveAccount();
-  const [isClaimLoading, setIsClaimLoading] = useState(false);
-  const { toast } = useToast();
-
-  const { mutateAsync: sendTransaction } = useSendAndConfirmTransaction();
-
-  const handleClaimTokens = async () => {
-    setIsClaimLoading(true);
-    try {
-      const tx = await prepareContractCall({
-        contract: tokenContract,
-        method: "function claim()",
-        params: [],
-      });
-
-      await sendTransaction(tx);
-      toast({
-        title: "Tokens Claimed!",
-        description:
-          "Your tokens have been successfully claimed. Please refresh the page.",
-        duration: 5000,
-      });
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Claim Failed",
-        description:
-          "There was an error claiming your tokens. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsClaimLoading(false);
-    }
-  };
+export function Navbar({ category, setCategory }: NavbarProps) {
+  const [isCurrencyDialogOpen, setIsCurrencyDialogOpen] = useState(false);
+  const [isGeneralDialogOpen, setIsGeneralDialogOpen] = useState(false);
 
   return (
-    <div className="flex justify-between items-center mb-6">
-      <div className="flex items-center gap-2">
-        <img src="/logo-black.svg" alt="Logo" className="h-8 w-8" />
-        <h1 className="text-2xl font-bold m-0">Swan³ Prediction Market</h1>
-      </div>
-      <div className="items-center flex gap-2">
-        <Button onClick={toggleSidebar} variant="outline">
-          Release Pool
-        </Button>
-        {account && (
-          <Button
-            onClick={handleClaimTokens}
-            disabled={isClaimLoading}
-            variant="outline"
-          >
-            {isClaimLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Claiming...
-              </>
-            ) : (
-              "Claim Tokens"
-            )}
+    <div className="flex items-center gap-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            Category:{" "}
+            <Badge variant="secondary" className="ml-1">
+              {category}
+            </Badge>
+            <ChevronDownIcon className="ml-1 h-4 w-4" />
           </Button>
-        )}
-        <ConnectButton
-          client={client}
-          theme={lightTheme()}
-          chain={kaiaTestnet}
-          connectButton={{
-            style: {
-              fontSize: "0.75rem !important",
-              height: "2.5rem !important",
-            },
-          }}
-          detailsButton={{
-            displayBalanceToken: {
-              [kaiaTestnet.id]: tokenContractAddress,
-            },
-          }}
-          wallets={wallets}
-          connectModal={{ size: "wide" }}
-          accountAbstraction={{
-            chain: kaiaTestnet,
-            sponsorGas: true,
-          }}
-        />
-      </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem
+            onClick={() => setCategory("Currency")}
+            className="gap-2"
+          >
+            <DollarSignIcon className="h-4 w-4 text-green-500" />
+            Currency Markets
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setCategory("General")}
+            className="gap-2"
+          >
+            <GlobeIcon className="h-4 w-4 text-blue-500" />
+            General Markets
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <PlusIcon className="mr-1 h-4 w-4" />
+            <span className="hidden lg:inline">Create Market</span>
+            <span className="lg:hidden">Create</span>
+            <ChevronDownIcon className="ml-1 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem
+            onClick={() => setIsCurrencyDialogOpen(true)}
+            className="gap-2"
+          >
+            <TrendingUpIcon className="h-4 w-4 text-green-500" />
+            Currency Forecast
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setIsGeneralDialogOpen(true)}
+            className="gap-2"
+          >
+            <NewspaperIcon className="h-4 w-4 text-blue-500" />
+            General Question
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <CreateCurrencyMarketDialog
+        isOpen={isCurrencyDialogOpen}
+        onOpenChange={setIsCurrencyDialogOpen}
+      />
+      <CreateGeneralMarketDialog
+        isOpen={isGeneralDialogOpen}
+        onOpenChange={setIsGeneralDialogOpen}
+      />
     </div>
   );
 }

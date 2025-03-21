@@ -4,46 +4,28 @@ import { useReadContract } from "thirdweb/react";
 import { contract, oracleContract } from "@/constants/contract";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketCard } from "./market-card";
-import { Navbar } from "./navbar";
+import { Header } from "./header";
 import { MarketCardSkeleton } from "./market-card-skeleton";
 import { Footer } from "./footer";
 import { useState, useEffect } from "react";
 import { VoteChart } from "./history-chart";
-import { Menu } from "./menu-bar";
-import SidebarMarketList from "./market-list-sidebar";
-import { SidebarProvider } from "./ui/sidebar";
+import { Navbar } from "./navbar";
+import { SidebarMarketList } from "./market-list-sidebar";
 import styled from "styled-components";
 import { Button } from "@/components/ui/button";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Activity, Clock, CheckCircle } from "lucide-react";
 
 const ChartContainer = styled.div`
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
   opacity: 0;
+  padding: 1rem 0;
 
   &.show {
-    max-height: 500px; /* 根据需要调整高度 */
+    max-height: 1000px; /* 根据需要调整高度 */
     opacity: 1;
-  }
-`;
-
-const SidebarContainer = styled.div`
-  position: fixed;
-  height: 100%;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease-out;
-
-  &.visible {
-    transform: translateX(0);
-  }
-`;
-
-const ContentContainer = styled.div`
-  flex-grow: 1;
-  transition: margin-left 0.3s ease-out;
-
-  &.sidebar-visible {
-    margin-left: 300px; /* 与侧边栏宽度一致 */
   }
 `;
 
@@ -56,11 +38,6 @@ export default function PredictionMarketDashboard() {
   ); // 添加状态来存储选中的市场索引
   const [chartTitle, setChartTitle] = useState(""); // 添加状态来存储图表标题
   const [showChart, setShowChart] = useState(false); // 添加状态来控制图表显示
-  const [isSidebarVisible, setIsSidebarVisible] = useState(false); // 添加状态来控制侧边栏显示
-
-  const toggleSidebar = () => {
-    setIsSidebarVisible(!isSidebarVisible); // 切换侧边栏显示状态
-  };
 
   const { data: generalMarketCount, isLoading: isLoadingGeneralCount } =
     useReadContract({
@@ -103,86 +80,116 @@ export default function PredictionMarketDashboard() {
 
   return (
     <div className="min-h-screen flex">
-      <SidebarContainer className={isSidebarVisible ? "visible" : ""}>
-        <SidebarProvider>
-          <SidebarMarketList />
-        </SidebarProvider>
-      </SidebarContainer>
-      <ContentContainer className={isSidebarVisible ? "sidebar-visible" : ""}>
-        <div className="flex-grow container mx-auto p-4">
-          <Navbar toggleSidebar={toggleSidebar} />
-          <Menu category={category} setCategory={setCategory} />
-          <ChartContainer className={showChart ? "show" : ""}>
-            {showChart && selectedMarketIndex !== null && (
-              <VoteChart
-                index={selectedMarketIndex}
-                title={chartTitle}
-                category={category}
-              />
-            )}
-          </ChartContainer>
-          <Tabs defaultValue="active" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="pending">Pending Resolution</TabsTrigger>
-              <TabsTrigger value="resolved">Resolved</TabsTrigger>
-            </TabsList>
+      <SidebarProvider>
+        <SidebarMarketList />
+        <SidebarInset>
+          <div className="flex-grow container mx-auto p-4">
+            <Header />
+            <ChartContainer className={showChart ? "show" : ""}>
+              {showChart && selectedMarketIndex !== null && (
+                <VoteChart
+                  index={selectedMarketIndex}
+                  title={chartTitle}
+                  category={category}
+                />
+              )}
+            </ChartContainer>
+            <Tabs
+              defaultValue="active"
+              className="flex w-full flex-col justify-start gap-6"
+            >
+              <div className="flex justify-between ">
+                <TabsList className="grid w-1/2 grid-cols-3">
+                  <TabsTrigger
+                    value="active"
+                    className="flex items-center gap-1"
+                  >
+                    <Activity className="h-4 w-4" />
+                    <span>Active</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="pending"
+                    className="flex items-center gap-1"
+                  >
+                    <Clock className="h-4 w-4" />
+                    <span>Pending</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="resolved"
+                    className="flex items-center gap-1"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Resolved</span>
+                  </TabsTrigger>
+                </TabsList>
+                <Navbar category={category} setCategory={setCategory} />
+              </div>
 
-            {isLoading ? (
-              <TabsContent value="active" className="mt-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {skeletonCards}
-                </div>
-              </TabsContent>
-            ) : (
-              <>
-                <TabsContent value="active">
+              {isLoading ? (
+                <TabsContent value="active" className="mt-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {Array.from({ length: Number(marketCount) }, (_, index) => (
-                      <MarketCard
-                        key={index}
-                        index={index}
-                        filter="active"
-                        category={category}
-                        onClick={handleMarketCardClick}
-                      />
-                    ))}
+                    {skeletonCards}
                   </div>
                 </TabsContent>
+              ) : (
+                <>
+                  <TabsContent value="active">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {Array.from(
+                        { length: Number(marketCount) },
+                        (_, index) => (
+                          <MarketCard
+                            key={index}
+                            index={index}
+                            filter="active"
+                            category={category}
+                            onClick={handleMarketCardClick}
+                          />
+                        )
+                      )}
+                    </div>
+                  </TabsContent>
 
-                <TabsContent value="pending">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {Array.from({ length: Number(marketCount) }, (_, index) => (
-                      <MarketCard
-                        key={index}
-                        index={index}
-                        filter="pending"
-                        category={category}
-                        onClick={handleMarketCardClick}
-                      />
-                    ))}
-                  </div>
-                </TabsContent>
+                  <TabsContent value="pending">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {Array.from(
+                        { length: Number(marketCount) },
+                        (_, index) => (
+                          <MarketCard
+                            key={index}
+                            index={index}
+                            filter="pending"
+                            category={category}
+                            onClick={handleMarketCardClick}
+                          />
+                        )
+                      )}
+                    </div>
+                  </TabsContent>
 
-                <TabsContent value="resolved">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {Array.from({ length: Number(marketCount) }, (_, index) => (
-                      <MarketCard
-                        key={index}
-                        index={index}
-                        filter="resolved"
-                        category={category}
-                        onClick={handleMarketCardClick}
-                      />
-                    ))}
-                  </div>
-                </TabsContent>
-              </>
-            )}
-          </Tabs>
-        </div>
-        <Footer />
-      </ContentContainer>
+                  <TabsContent value="resolved">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {Array.from(
+                        { length: Number(marketCount) },
+                        (_, index) => (
+                          <MarketCard
+                            key={index}
+                            index={index}
+                            filter="resolved"
+                            category={category}
+                            onClick={handleMarketCardClick}
+                          />
+                        )
+                      )}
+                    </div>
+                  </TabsContent>
+                </>
+              )}
+            </Tabs>
+          </div>
+          <Footer />
+        </SidebarInset>
+      </SidebarProvider>
     </div>
   );
 }

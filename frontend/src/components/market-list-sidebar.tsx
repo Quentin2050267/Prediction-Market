@@ -18,7 +18,7 @@ interface Market {
   title: string;
 }
 
-const SidebarMarketList: React.FC = () => {
+export function SidebarMarketList() {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -66,28 +66,28 @@ const SidebarMarketList: React.FC = () => {
   }, [generalMarketCount, currencyMarketCount]);
 
   return (
-    <Sidebar side="left" variant="floating">
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Markets to be released</SidebarGroupLabel>
-          <SidebarMenu>
-            {isLoading ? (
-              <div>Loading...</div>
-            ) : (
-              markets.map((market) => (
-                <SidebarMenuItem key={`${market.category}-${market.index}`}>
-                  <SidebarMenuButton>
-                    <Badge variant="secondary">{market.category}</Badge>
-                    {market.title}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))
-            )}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <div>
+      <Sidebar side="left" variant="floating">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Markets to be released</SidebarGroupLabel>
+            <SidebarMenu>
+              {isLoading ? (
+                <div>Loading...</div>
+              ) : (
+                markets.map((market) => (
+                  <SidebarMenuItem key={`${market.category}-${market.index}`}>
+                    <SidebarMenuButton>
+                      <Badge variant="secondary">{market.category}</Badge>
+                      {market.title}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              )}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+    </div>
   );
-};
-
-export default SidebarMarketList;
+}
