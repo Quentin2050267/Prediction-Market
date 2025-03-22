@@ -11,7 +11,7 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
 - Thirdweb
 - Go to [Kaia Faucet](https://www.kaia.io/faucet) and claim some test tokens yourself every 24h with Metamask wallet address.
 
-### Installation
+### Installation (You only need to do it once)
 
 1. Clone the repository:
     ```bash
@@ -46,15 +46,19 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
     ```bash
     npx hardhat run scripts/deploy.js --network kairos
     ```
+    After this cmd, you will see:
+    <img width="714" alt="image" src="https://github.com/user-attachments/assets/431323d3-59d1-419f-a8eb-ffbd1c6ae5cb" />
+
     **Please copy the addresses of these contracts and paste them into `../frontend/src/constants/contracts.ts` and `.env` file.**
     ```bash
-    PREDICTION_MARKET_CONTRACT_ADDRESS= "0x..."
     SWAN_TOKEN_CONTRACT_ADDRESS= "0x..."
+    PREDICTION_MARKET_CONTRACT_ADDRESS= "0x..."
     ORACLE_CONTRACT_ADDRESS= "0x..."
+    CANDIDATE_CONTRACT_ADDRESS= "0x..."
     ```
 
-    There should be 6 entries in `.env`.
-  <img width="627" alt="image" src="https://github.com/user-attachments/assets/f8ffefe0-f848-45e1-be08-7318430bec6a" />
+    There should be 7 entries in `.env`.
+    <img width="611" alt="image" src="https://github.com/user-attachments/assets/2baf3bac-d365-4329-bfc1-8aab5c93caf1" />
 
 
 7. Configure `.env` file in the frontend directory:
@@ -80,9 +84,11 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
     ```
 
 ## Glimpse
-![image](https://github.com/user-attachments/assets/f5aa7e17-9b78-4714-bed8-96102c8ab1dc)
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/7578d0a8-898c-485c-8cae-de33313a18c9" />
 
-<img width="1470" alt="image" src="https://github.com/user-attachments/assets/3cc1ef95-07e9-4e8e-8eec-1e9e33e43777" />
-<img width="1470" alt="image" src="https://github.com/user-attachments/assets/c3d9ef25-64a6-4a44-bfb8-6d80de57d0cc" />
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/f8b7457b-4642-45cd-903c-f054bafad59a" />
+
+<img width="1470" alt="image" src="https://github.com/user-attachments/assets/8e625389-63b5-44fb-9b82-8fc4992a1f67" />
+
 
 
