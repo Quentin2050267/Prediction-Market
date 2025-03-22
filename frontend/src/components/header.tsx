@@ -9,15 +9,15 @@ import {
 import { prepareContractCall } from "thirdweb";
 import { client } from "@/app/client";
 import { kaiaTestnet } from "@/chain.config";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import { tokenContract, tokenContractAddress } from "@/constants/contract";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Gift } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const wallets = [
   inAppWallet({
@@ -44,9 +44,20 @@ const wallets = [
 export function Header() {
   const account = useActiveAccount();
   const [isClaimLoading, setIsClaimLoading] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
   const { toast } = useToast();
 
   const { mutateAsync: sendTransaction } = useSendAndConfirmTransaction();
+
+  // 重置动画状态的效果
+  useEffect(() => {
+    if (showAnimation) {
+      const timer = setTimeout(() => {
+        setShowAnimation(false);
+      }, 1000); // 延长动画显示时间
+      return () => clearTimeout(timer);
+    }
+  }, [showAnimation]);
 
   const handleClaimTokens = async () => {
     setIsClaimLoading(true);
@@ -58,12 +69,18 @@ export function Header() {
       });
 
       await sendTransaction(tx);
+
       toast({
         title: "Tokens Claimed!",
         description:
           "Your tokens have been successfully claimed. Please refresh the page.",
         duration: 5000,
       });
+
+      // 交易成功后，添加短暂延迟然后显示动画
+      setTimeout(() => {
+        setShowAnimation(true);
+      }, 300);
     } catch (error) {
       console.error(error);
       toast({
@@ -91,7 +108,10 @@ export function Header() {
             onClick={handleClaimTokens}
             disabled={isClaimLoading}
             variant="outline"
-            // size="lg"
+            className={cn(
+              "relative overflow-hidden",
+              showAnimation ? "border-amber-400 text-amber-600" : ""
+            )}
           >
             {isClaimLoading ? (
               <>
@@ -100,9 +120,19 @@ export function Header() {
               </>
             ) : (
               <>
-                <Gift className="mr-2 h-4 w-4" />
+                <Gift
+                  className={cn(
+                    "mr-2 h-4 w-4 transition-transform duration-300",
+                    showAnimation ? "scale-110" : ""
+                  )}
+                />
                 Claim Tokens
               </>
+            )}
+
+            {/* 涟漪动画 */}
+            {showAnimation && (
+              <span className="absolute top-0 left-0 right-0 bottom-0 bg-amber-300/40 animate-ripple rounded-md"></span>
             )}
           </Button>
         )}

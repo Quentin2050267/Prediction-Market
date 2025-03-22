@@ -153,7 +153,7 @@ export function MarketCard({
         const marketSymbol = assetSymbols ? assetSymbols[0].toUpperCase() : "";
         const quoteSymbol = assetSymbols ? assetSymbols[1].toUpperCase() : "";
 
-        marketTitle = `1 ${marketSymbol} ${operatorToSymbol(
+        marketTitle = `Will 1 ${marketSymbol} ${operatorToSymbol(
           market?.operator
         )} ${Number(market?.targetPrice) / 10 ** 8} ${quoteSymbol}?`;
       } else {

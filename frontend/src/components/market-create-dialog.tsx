@@ -12,7 +12,7 @@ import { Button } from "./ui/button";
 import { useSendAndConfirmTransaction } from "thirdweb/react";
 import { useToast } from "@/hooks/use-toast";
 import { prepareContractCall } from "thirdweb";
-import { contract, oracleContract } from "@/constants/contract";
+import { candidateContract } from "@/constants/contract";
 import { Loader2, CalendarIcon } from "lucide-react";
 import { priceFeedIds, getPriceFeedId } from "@/pricefeed/priceFeedIds";
 import { HermesClient } from "@pythnetwork/hermes-client";
@@ -45,6 +45,7 @@ export function CreateCurrencyMarketDialog({
   isOpen,
   onOpenChange,
 }: CreateCurrencyMarketDialogProps) {
+  const [title, setTitle] = useState("");
   const [assetSymbol, setAssetSymbol] = useState("");
   const [condition, setCondition] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
@@ -71,6 +72,22 @@ export function CreateCurrencyMarketDialog({
   }, [assetSymbol, condition, targetPrice, date]);
 
   useEffect(() => {
+    if (assetSymbol) {
+      const assetSymbols = assetSymbol?.split("/");
+      const marketSymbol = assetSymbols ? assetSymbols[0].toUpperCase() : "";
+      const quoteSymbol = assetSymbols ? assetSymbols[1].toUpperCase() : "";
+      const conditionText =
+        condition === ">" ? "above" : condition === "<" ? "below" : "equal to";
+
+      if (condition && targetPrice) {
+        setTitle(
+          `Will 1 ${marketSymbol} ${condition} ${targetPrice} ${quoteSymbol}?`
+        );
+      }
+    }
+  }, [assetSymbol, condition, targetPrice, title]);
+
+  useEffect(() => {
     const fetchPrice = async () => {
       if (assetSymbol) {
         const connection = new HermesClient("https://hermes.pyth.network", {});
@@ -88,6 +105,7 @@ export function CreateCurrencyMarketDialog({
   }, [assetSymbol]);
 
   const resetForm = () => {
+    setTitle("");
     setAssetSymbol("");
     setCondition("");
     setTargetPrice("");
@@ -95,31 +113,31 @@ export function CreateCurrencyMarketDialog({
   };
 
   const handleCreateMarket = async () => {
-    if (!date) return;
+    if (!date || !title) return;
 
-    const duration =
-      Math.floor(date.getTime() / 1000) - Math.floor(Date.now() / 1000);
+    const resolutionTime = Math.floor(date.getTime() / 1000);
     const num_condition = condition === ">" ? 0 : condition === "<" ? 1 : 2;
     setIsCreating(true);
     try {
       const tx = await prepareContractCall({
-        contract: oracleContract,
+        contract: candidateContract,
         method:
-          "function createMarket(string _assetSymbol, uint8 _operator, uint256 _targetPrice, uint256 _duration) returns (uint256)",
+          "function createCurrencyMarketCandidate(string _title, string _assetSymbol, uint8 _operator, uint256 _targetPrice, uint256 _resolutionTime) returns (uint256)",
         params: [
+          title,
           assetSymbol,
           num_condition,
           BigInt(Math.floor(parseFloat(targetPrice) * 10 ** 8)),
-          BigInt(duration),
+          BigInt(resolutionTime),
         ],
       });
       await mutateTransaction(tx);
 
       // Show success toast
       toast({
-        title: "Market Created",
+        title: "Market Candidate Created",
         description:
-          "Your market has been created successfully, please refresh the page.",
+          "Your market has been submitted to the candidate pool. It will be published after receiving enough votes.",
         duration: 5000, // 5 seconds
       });
     } catch (error) {
@@ -127,7 +145,7 @@ export function CreateCurrencyMarketDialog({
       // Optionally show error toast
       toast({
         title: "Create Market Error",
-        description: "There was an error creating the market.",
+        description: "There was an error creating the market candidate.",
         variant: "destructive",
       });
     } finally {
@@ -160,6 +178,18 @@ export function CreateCurrencyMarketDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Market Title</Label>
+            <Input
+              id="title"
+              type="text"
+              placeholder="e.g., Will 1 BTC > 50000 USD? (Automatically Populate)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled
+            />
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="assetSymbol">Asset Symbol</Label>
             <Select value={assetSymbol} onValueChange={setAssetSymbol}>
@@ -250,16 +280,21 @@ export function CreateCurrencyMarketDialog({
           <Button
             onClick={handleCreateMarket}
             disabled={
-              !assetSymbol || !condition || !targetPrice || !date || isCreating
+              !title ||
+              !assetSymbol ||
+              !condition ||
+              !targetPrice ||
+              !date ||
+              isCreating
             }
           >
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                Submitting...
               </>
             ) : (
-              "Create"
+              "Submit to Candidate Pool"
             )}
           </Button>
           <Button variant="outline" onClick={handleCancel}>
@@ -280,6 +315,7 @@ export function CreateGeneralMarketDialog({
   isOpen,
   onOpenChange,
 }: CreateGeneralMarketDialogProps) {
+  const [title, setTitle] = useState("");
   const [question, setQuestion] = useState("");
   const [optionA, setOptionA] = useState("");
   const [optionB, setOptionB] = useState("");
@@ -299,7 +335,14 @@ export function CreateGeneralMarketDialog({
     }
   }, [question, optionA, optionB, date]);
 
+  useEffect(() => {
+    if (question && !title) {
+      setTitle(question);
+    }
+  }, [question, title]);
+
   const resetForm = () => {
+    setTitle("");
     setQuestion("");
     setOptionA("");
     setOptionB("");
@@ -307,25 +350,24 @@ export function CreateGeneralMarketDialog({
   };
 
   const handleCreateMarket = async () => {
-    if (!date) return;
+    if (!date || !title) return;
 
-    const duration =
-      Math.floor(date.getTime() / 1000) - Math.floor(Date.now() / 1000);
+    const resolutionTime = Math.floor(date.getTime() / 1000);
     setIsCreating(true);
     try {
       const tx = await prepareContractCall({
-        contract: contract,
+        contract: candidateContract,
         method:
-          "function createMarket(string _question, string _optionA, string _optionB, uint256 _duration) returns (uint256)",
-        params: [question, optionA, optionB, BigInt(duration)],
+          "function createGeneralMarketCandidate(string _title, string _question, string _optionA, string _optionB, uint256 _resolutionTime) returns (uint256)",
+        params: [title, question, optionA, optionB, BigInt(resolutionTime)],
       });
       await mutateTransaction(tx);
 
       // Show success toast
       toast({
-        title: "Market Created",
+        title: "Market Candidate Created",
         description:
-          "Your market has been created successfully, please refresh the page.",
+          "Your market has been submitted to the candidate pool. It will be published after receiving enough votes.",
         duration: 5000, // 5 seconds
       });
     } catch (error) {
@@ -333,7 +375,7 @@ export function CreateGeneralMarketDialog({
       // Optionally show error toast
       toast({
         title: "Create Market Error",
-        description: "There was an error creating the market.",
+        description: "There was an error creating the market candidate.",
         variant: "destructive",
       });
     } finally {
@@ -366,6 +408,18 @@ export function CreateGeneralMarketDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Market Title</Label>
+            <Input
+              id="title"
+              type="text"
+              placeholder="e.g., Will it rain tomorrow? (Automatically Populate)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled
+            />
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="question">Question</Label>
             <Input
@@ -435,15 +489,17 @@ export function CreateGeneralMarketDialog({
         <DialogFooter>
           <Button
             onClick={handleCreateMarket}
-            disabled={!question || !optionA || !optionB || !date || isCreating}
+            disabled={
+              !title || !question || !optionA || !optionB || !date || isCreating
+            }
           >
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                Submitting...
               </>
             ) : (
-              "Create"
+              "Submit to Candidate Pool"
             )}
           </Button>
           <Button variant="outline" onClick={handleCancel}>

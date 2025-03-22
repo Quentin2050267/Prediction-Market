@@ -3,9 +3,6 @@ require("@matterlabs/hardhat-zksync-verify");
 require("@nomicfoundation/hardhat-toolbox");
 require('dotenv').config();
 
-// require('dotenv').config({
-//   path: '../.env', // 指向最外层的 .env 文件
-// });
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -57,6 +54,7 @@ module.exports = {
         enabled: true,
         runs: 200,
       },
+      viaIR: true,
     },
   },
 };

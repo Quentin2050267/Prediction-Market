@@ -3,10 +3,10 @@ import { defineChain, getContract } from "thirdweb";
 import { base } from "thirdweb/chains";
 import { kaiaTestnet } from "@/chain.config";
 
-
-export const predictionMarketContractAddress = "0x252BD0Bd1C9d6E2D99e8e6Ec04D03c565E8A75A4";
-export const tokenContractAddress = "0x4e9E68C4389ddd6120260AD66b4b525030D802D4";
-export const oracleContractAddress = "0xd9d17445Ab4D766100BE238Bce71BE6584574fd3";
+export const tokenContractAddress = "0xA35a527ba1db125E5219C03d8Ae60bA7CcC54b60";
+export const predictionMarketContractAddress = "0xb86C41D50fB94dCE0b04fA4c833750d3b1fa18Ae";
+export const oracleContractAddress = "0x8a78F4443Fa7e9BfC35B0780608f8923E488eee6";
+export const candidateContractAddress = "0x50Cd7231A677b06a5b799922D313f38f50fF2D58";
 
 export const contract = getContract({
     client: client,
@@ -26,5 +26,12 @@ export const oracleContract = getContract({
     client: client,
     // chain: base,
     address: oracleContractAddress,
+    chain: kaiaTestnet
+});
+
+export const candidateContract = getContract({
+    client: client,
+    // chain: base,
+    address: candidateContractAddress,
     chain: kaiaTestnet
 });
