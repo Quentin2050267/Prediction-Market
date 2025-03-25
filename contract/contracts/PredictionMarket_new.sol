@@ -63,6 +63,7 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
     constructor(address _swanToken) {
         swanToken = IERC20(_swanToken);
         _setupOwner(msg.sender);
+        AMM = AutomatedMarketMaker(_ammAddress);
     }
 
     function _canSetOwner() internal view virtual override returns (bool) {
@@ -75,7 +76,7 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         string memory _optionB,
         uint256 _duration
     ) external returns (uint256) {
-        // require(msg.sender == owner(), "Only owner can create markets");
+        require(msg.sender == owner(), "Only owner can create markets");
         require(_duration > 0, "Duration must be greater than 0");
         require(bytes(_question).length > 0, "Question cannot be empty");
         require(bytes(_optionA).length > 0, "Option A cannot be empty");
@@ -90,6 +91,14 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         market.optionA = _optionA;
         market.optionB = _optionB;
         market.duration = _duration;
+
+        // init cost!!!
+        market.totalOptionAShares = 0;
+        market.totalOptionBShares = 0;
+        uint256 initialCost = AMM.getCost(0, 0);
+        // return initialCost;
+        require(swanToken.transferFrom(msg.sender, address(this), initialCost), "Transfer failed");
+        market.marketCost = initialCost;
 
         emit MarketCreated(
             marketId,
