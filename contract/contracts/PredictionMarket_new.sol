@@ -139,6 +139,28 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         emit SharesPurchased(_marketId, msg.sender, _isOptionA, _share);
     }
 
+    function addLiquidity(uint256 _marketId, uint256 amountA, uint256 amountB) external {
+        require(amountA > 0 && amountB > 0, "Amounts must be greater than 0");
+
+        Market storage market = markets[_marketId];
+
+        // calculate cost
+        uint256 newCost = AMM.getCost(
+            market.totalOptionAShares + amountA,
+            market.totalOptionBShares + amountB
+        );
+
+        uint256 deltaCost = newCost - market.marketCost;
+
+        // update markets
+        market.marketCost = newCost;
+        market.totalOptionAShares += amountA;
+        market.totalOptionBShares += amountB;
+
+        // transfer
+        require(swanToken.transferFrom(msg.sender, address(this), deltaCost), "Transfer failed");
+    }
+
     function getVotesByDate(
         uint256 _marketId,
         uint256 _date
