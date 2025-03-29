@@ -83,6 +83,9 @@ It is a baseline for our prediction market Web3 dapp. **It is now fully connecte
     npm run dev
     ```
 
+## Team Contribution
+Qin Tian: Responsible for implementing the entire codebase and github readme except for the AMM logic in the smart contract, including developing the whole frontend, backend, and the core solidity contracts.
+
 ## Glimpse
 <img width="1470" alt="image" src="https://github.com/user-attachments/assets/7578d0a8-898c-485c-8cae-de33313a18c9" />
 
