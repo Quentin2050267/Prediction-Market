@@ -15,6 +15,8 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         OPTION_B
     }
 
+    uint256 public initialLiquidity;
+
     struct Market {
         string question;
         uint256 endTime;
@@ -30,6 +32,11 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         mapping(address => bool) hasClaimed;
         mapping(uint256 => uint256) optionAVotesByDate; // new
         mapping(uint256 => uint256) optionBVotesByDate; // new
+        // payment
+        mapping(address => uint256) optionAPayments;
+        mapping(address => uint256) optionBPayments;
+        uint256 totalOptionAPayments;
+        uint256 totalOptionBPayments;
     }
 
     IERC20 public swanToken;
@@ -76,7 +83,7 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         string memory _optionB,
         uint256 _duration
     ) external returns (uint256) {
-        require(msg.sender == owner(), "Only owner can create markets");
+        // require(msg.sender == owner(), "Only owner can create markets");
         require(_duration > 0, "Duration must be greater than 0");
         require(bytes(_question).length > 0, "Question cannot be empty");
         require(bytes(_optionA).length > 0, "Option A cannot be empty");
@@ -90,24 +97,82 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         market.outcome = MarketOutcome.UNRESOLVED;
         market.optionA = _optionA;
         market.optionB = _optionB;
-        market.duration = _duration;
 
         // init cost!!!
-        market.totalOptionAShares = 0;
-        market.totalOptionBShares = 0;
+        uint8 decimals = 18;
+        market.totalOptionAShares = initialLiquidity;
+        market.totalOptionBShares = initialLiquidity;
         uint256 initialCost = AMM.getCost(0, 0);
-        // return initialCost;
+        // transfer
         require(swanToken.transferFrom(msg.sender, address(this), initialCost), "Transfer failed");
         market.marketCost = initialCost;
 
-        emit MarketCreated(
-            marketId,
-            _question,
-            _optionA,
-            _optionB,
-            market.endTime
-        );
+        market.totalOptionAShares += initialCost/2;
+        market.totalOptionBShares += initialCost/2;
+        market.optionASharesBalance[msg.sender] += initialCost/2;
+        market.optionBSharesBalance[msg.sender] += initialCost/2;
+
+        emit MarketCreated(marketId, _question, _optionA, _optionB, market.endTime);
         return marketId;
+    }
+
+    function getAmount(uint256 _marketId, bool _isOptionA, uint256 _shares) external view returns (uint256) {
+        Market storage market = markets[_marketId];
+        uint256 total_cost = AMM.getAmount(
+            market.totalOptionAShares, market.totalOptionBShares, _isOptionA, _shares
+        );
+        return total_cost;
+    }
+
+    function buyByShares(uint256 _marketId, bool _isOptionA, uint256 _shares) external {
+        Market storage market = markets[_marketId];
+        require(market.totalOptionAShares > 0 && market.totalOptionBShares > 0, "Not enough liquidity!");
+        require(market.endTime > block.timestamp, "Market has ended");
+        require(!market.resolved, "Market has been resolved");
+        require(_shares > 0, "Amount must be greater than 0");
+
+
+        uint256 total_cost = AMM.getAmount(
+            market.totalOptionAShares, market.totalOptionBShares, _isOptionA, _shares
+        );
+
+        uint256 currentDate = block.timestamp / 1 days;
+
+        require(
+            swanToken.transferFrom(msg.sender, address(this), total_cost),
+            "Transfer failed"
+        );
+        if (_isOptionA) {
+            market.optionASharesBalance[msg.sender] += _shares;
+            market.totalOptionAShares += _shares;
+            market.optionAVotesByDate[currentDate] += _shares;
+            market.optionAPayments[msg.sender] += total_cost;
+            market.totalOptionAPayments += total_cost;
+        } else {
+            market.optionBSharesBalance[msg.sender] += _shares;
+            market.totalOptionBShares += _shares;
+            market.optionBVotesByDate[currentDate] += _shares;
+            market.optionBPayments[msg.sender] += total_cost;
+            market.totalOptionBPayments += total_cost;
+        }
+
+        emit SharesPurchased(_marketId, msg.sender, _isOptionA, _shares);
+
+    }
+
+    function getMarketCost(uint256 _marketId) external view returns (uint256) {
+        return markets[_marketId].marketCost;
+    }
+
+    function getMarketPayments(uint256 _marketId) external view returns (
+        uint256 totalOptionAPayments,
+        uint256 totalOptionBPayments
+    ) {
+        Market storage market = markets[_marketId];
+        return (
+            market.totalOptionAPayments,
+            market.totalOptionBPayments
+        );
     }
 
     function buyShares(
@@ -238,15 +303,15 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
     }
 
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
-        require(msg.sender == owner(), "Only owner can resolve markets");
+        // require(msg.sender == owner(), "Only owner can resolve markets");
         Market storage market = markets[_marketId];
         require(market.endTime < block.timestamp, "Market has not ended");
         require(!market.resolved, "Market has already been resolved");
-        require(
-            _outcome != MarketOutcome.UNRESOLVED,
-            "Outcome cannot be unresolved"
-        );
+        require(_outcome != MarketOutcome.UNRESOLVED, "Outcome cannot be unresolved");
 
+        uint8 decimals = 18;
+        market.totalOptionAShares -= initialLiquidity;
+        market.totalOptionBShares -= initialLiquidity;
         market.outcome = _outcome;
         market.resolved = true;
 
@@ -259,30 +324,52 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         require(!market.hasClaimed[msg.sender], "Already claimed");
 
         uint256 userShares = 0;
-        uint256 winningShares = 0;
-        uint256 losingShares = 0;
+        uint256 totalWinningShares = 0;
+        uint256 userPayment = 0;
+        uint256 totalLosingPool = 0;
 
         if (market.outcome == MarketOutcome.OPTION_A) {
+            // 用户持有A选项股份（获胜方）
             userShares = market.optionASharesBalance[msg.sender];
-            winningShares = market.totalOptionAShares;
-            losingShares = market.totalOptionBShares;
+            totalWinningShares = market.totalOptionAShares;
+            userPayment = market.optionAPayments[msg.sender];
+
+            // 输家池的总资金
+            totalLosingPool = market.totalOptionBPayments;
             market.optionASharesBalance[msg.sender] = 0;
         } else if (market.outcome == MarketOutcome.OPTION_B) {
+            // 用户持有B选项股份（获胜方）
             userShares = market.optionBSharesBalance[msg.sender];
-            winningShares = market.totalOptionBShares;
-            losingShares = market.totalOptionAShares;
+            totalWinningShares = market.totalOptionBShares;
+            userPayment = market.optionBPayments[msg.sender];
+
+            // 输家池的总资金
+            totalLosingPool = market.totalOptionAPayments;
             market.optionBSharesBalance[msg.sender] = 0;
         } else {
             revert("Market has not been resolved");
         }
 
         require(userShares > 0, "No winnings to claim");
-        uint256 rewardRatio = (losingShares * 1e18) / winningShares;
-        uint256 winnings = userShares + (userShares * rewardRatio) / 1e18;
 
-        require(swanToken.transfer(msg.sender, winnings), "Transfer failed");
+
+        // 计算用户应得的输家池份额
+        uint256 totalRewardPool = totalLosingPool + AMM.getCost(0, 0);
+        uint256 shareOfLosingPool = 0;
+        if (totalWinningShares > 0) {
+            // 根据用户在获胜池中的份额比例分配输家池资金
+            shareOfLosingPool = (userShares * totalRewardPool) / totalWinningShares;
+        }
+
+        // 总奖金 = 用户投入 + 分得的输家池份额
+        uint256 totalWinnings = userPayment + shareOfLosingPool;
+
+        // 标记用户已领取
         market.hasClaimed[msg.sender] = true;
-        emit Claimed(_marketId, msg.sender, winnings);
+
+        // 转账奖金给用户
+        require(swanToken.transfer(msg.sender, totalWinnings), "Transfer failed");
+        emit Claimed(_marketId, msg.sender, totalWinnings);
     }
 
     function getMarketInfo(
