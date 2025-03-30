@@ -372,7 +372,7 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         emit Claimed(_marketId, msg.sender, totalWinnings);
     }
 
-    function getPrices(uint256 _marketId) external view returns (uint256 priceA, uint256 priceB) {
+    function getMarginalPrices(uint256 _marketId) external view returns (uint256 priceA, uint256 priceB) {
         Market storage market = markets[_marketId];
 
         require(_marketId < marketCount, "Market does not exist");
