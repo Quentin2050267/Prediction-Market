@@ -71,6 +71,7 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         swanToken = IERC20(_swanToken);
         _setupOwner(msg.sender);
         AMM = AutomatedMarketMaker(_ammAddress);
+        initialLiquidity = 5000 * 10**(18);
     }
 
     function _canSetOwner() internal view virtual override returns (bool) {
@@ -266,40 +267,6 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         }
 
         return (dates, optionAVotes, optionBVotes);
-    }
-
-    function buyByAmount(
-        uint256 _marketId,
-        bool _isOptionA,
-        uint256 _amount
-    ) external {
-        Market storage market = markets[_marketId];
-        require(market.endTime > block.timestamp, "Market has ended");
-        require(_amount > 0, "Amount must be greater than 0");
-        require(!market.resolved, "Market has been resolved");
-
-        uint256 shares = AMM.getShares(_marketId, _isOptionA, _amount);
-
-        uint256 currentDate = block.timestamp / 1 days;
-
-        // pay
-        require(
-            swanToken.transferFrom(msg.sender, address(this), _amount),
-            "Transfer failed"
-        );
-
-        // record
-        if (_isOptionA) {
-            market.optionASharesBalance[msg.sender] += shares;
-            market.totalOptionAShares += shares;
-            market.optionAVotesByDate[currentDate] += shares;
-        } else {
-            market.optionBSharesBalance[msg.sender] += shares;
-            market.totalOptionBShares += shares;
-            market.optionAVotesByDate[currentDate] += shares;
-        }
-
-        emit SharesPurchased(_marketId, msg.sender, _isOptionA, shares);
     }
 
     function resolveMarket(uint256 _marketId, MarketOutcome _outcome) external {
