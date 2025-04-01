@@ -26,6 +26,7 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         string optionB;
         uint256 totalOptionAShares;
         uint256 totalOptionBShares;
+        uint256 marketCost;  // cost fn!
         bool resolved;
         mapping(address => uint256) optionASharesBalance;
         mapping(address => uint256) optionBSharesBalance;
