@@ -68,7 +68,7 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         uint256 amount
     );
 
-    constructor(address _swanToken) {
+    constructor(address _swanToken, address _ammAddress) {
         swanToken = IERC20(_swanToken);
         _setupOwner(msg.sender);
         AMM = AutomatedMarketMaker(_ammAddress);
@@ -359,26 +359,27 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         returns (
             string memory question,
             uint256 endTime,
-            uint256 duration,
+            // uint256 duration,
             MarketOutcome outcome,
             string memory optionA,
             string memory optionB,
             uint256 totalOptionAShares,
             uint256 totalOptionBShares,
-            bool resolved
-        )
-    {
+            bool resolved,
+            uint256 duration
+        ) {
         Market storage market = markets[_marketId];
         return (
             market.question,
             market.endTime,
-            market.duration,
+            // market.duration,
             market.outcome,
             market.optionA,
             market.optionB,
             market.totalOptionAShares,
             market.totalOptionBShares,
-            market.resolved
+            market.resolved,
+            market.duration
         );
     }
 

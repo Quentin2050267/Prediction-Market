@@ -1,4 +1,4 @@
-from brownie import SwanToken, PredictionMarket, AutomatedMarketMaker, accounts, chain
+from brownie import SwanToken, PredictionMarketNew, AutomatedMarketMaker, accounts, chain
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
     # 2️⃣ 部署 PredictionMarket，传入 swanToken 地址
     print("🚀 Deploying PredictionMarket...")
     amm = AutomatedMarketMaker.deploy({'from': owner})
-    prediction_market = PredictionMarket.deploy(
+    prediction_market = PredictionMarketNew.deploy(
         betting_token.address,
         amm.address,
         {'from': owner}
