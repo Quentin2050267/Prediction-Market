@@ -74,8 +74,8 @@ def main():
     print(f"🏦 Market Balance: {market_balance / 1e18} tokens")
 
     # 检查 AMM 的价格计算
-    market_total_A_before = prediction_market.getMarketInfo(market_id)[5]
-    market_total_B_before = prediction_market.getMarketInfo(market_id)[6]
+    market_total_A_before = prediction_market.getMarketInfo(market_id)[6]
+    market_total_B_before = prediction_market.getMarketInfo(market_id)[7]
     price_A_before, price_B_before = amm.getPrices(market_total_A_before, market_total_B_before)
     print(f"💰 Initial AMM Price for 'Yes': {price_A_before / 1e18}")
     print(f"💰 Initial AMM Price for 'No': {price_B_before / 1e18}")
@@ -112,8 +112,8 @@ def main():
     print(f"User2 paid: {user2_paid / 1e18} tokens for No shares")
 
     # 获取购买后的总份额和市场余额
-    market_total_A_after = prediction_market.getMarketInfo(market_id)[5]
-    market_total_B_after = prediction_market.getMarketInfo(market_id)[6]
+    market_total_A_after = prediction_market.getMarketInfo(market_id)[6]
+    market_total_B_after = prediction_market.getMarketInfo(market_id)[7]
     print(f"\n🏦 Market Shares After: A = {market_total_A_after / 1e18}, B = {market_total_B_after / 1e18}")
 
     market_balance_after = betting_token.balanceOf(prediction_market.address)
@@ -151,8 +151,8 @@ def main():
     print(f"Total Option B Payments: {total_b_payments / 1e18}")
 
     # 获取解析后的份额数据
-    market_total_A_resolved = prediction_market.getMarketInfo(market_id)[5]
-    market_total_B_resolved = prediction_market.getMarketInfo(market_id)[6]
+    market_total_A_resolved = prediction_market.getMarketInfo(market_id)[6]
+    market_total_B_resolved = prediction_market.getMarketInfo(market_id)[7]
     print(
         f"📊 Total shares after resolution: A = {market_total_A_resolved / 1e18}, B = {market_total_B_resolved / 1e18}")
     print(f"📊 Total user shares in A: {(user1_shares[0] + user3_shares[0]) / 1e18}")

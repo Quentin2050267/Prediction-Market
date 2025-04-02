@@ -359,27 +359,25 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         returns (
             string memory question,
             uint256 endTime,
-            // uint256 duration,
+            uint256 duration,
             MarketOutcome outcome,
             string memory optionA,
             string memory optionB,
             uint256 totalOptionAShares,
             uint256 totalOptionBShares,
-            bool resolved,
-            uint256 duration
+            bool resolved
         ) {
         Market storage market = markets[_marketId];
         return (
             market.question,
             market.endTime,
-            // market.duration,
+            market.duration,
             market.outcome,
             market.optionA,
             market.optionB,
             market.totalOptionAShares,
             market.totalOptionBShares,
-            market.resolved,
-            market.duration
+            market.resolved
         );
     }
 
