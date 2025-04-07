@@ -1,5 +1,4 @@
 # Web3-Prediction-Market
-It is a baseline for our prediction market Web3 dapp. **It is now fully connected into Kaia Testnet.**
 
 ## Implementation
 
