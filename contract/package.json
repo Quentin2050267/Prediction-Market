@@ -20,6 +20,7 @@
     "@uma/core": "^2.61.0",
     "dotenv": "^16.4.7",
     "witnet-solidity-bridge": "^2.0.18",
-    "zksync-ethers": "^5.7.0"
+    "zksync-ethers": "^5.7.0",
+    "prb-math": "4.1.0"
   }
 }
