@@ -76,7 +76,7 @@ def main():
     # 检查 AMM 的价格计算
     market_total_A_before = prediction_market.getMarketInfo(market_id)[6]
     market_total_B_before = prediction_market.getMarketInfo(market_id)[7]
-    price_A_before, price_B_before = amm.getPrices(market_total_A_before, market_total_B_before)
+    price_A_before, price_B_before = prediction_market.getMarginalPrices(market_id)
     print(f"💰 Initial AMM Price for 'Yes': {price_A_before / 1e18}")
     print(f"💰 Initial AMM Price for 'No': {price_B_before / 1e18}")
     print(f"🏦 Market Shares Before: A = {market_total_A_before / 1e18}, B = {market_total_B_before / 1e18}\n")
@@ -135,7 +135,7 @@ def main():
     print(f"📊 User3 Share Ratio in winning pool: {user3_share_ratio}")
 
     # 测试价格变化
-    price_A_final, price_B_final = amm.getPrices(market_total_A_after, market_total_B_after)
+    price_A_final, price_B_final = prediction_market.getMarginalPrices(market_id)
     print(f"\n📈 Final AMM Price for 'Yes': {price_A_final / 1e18}")
     print(f"📉 Final AMM Price for 'No': {price_B_final / 1e18}")
 
