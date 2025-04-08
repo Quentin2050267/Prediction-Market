@@ -1,0 +1,475 @@
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { useState, useRef, useEffect } from "react";
+import { useActiveAccount, useSendAndConfirmTransaction } from "thirdweb/react";
+import { prepareContractCall, readContract, toWei } from "thirdweb";
+import { contract, oracleContract, tokenContract, quadraticContract, quadraticOracleContract } from "@/constants/contract";
+import { approve } from "thirdweb/extensions/erc20";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+
+// Types for the component props
+interface MarketBuyInterfaceProps {
+  marketId: number;
+  market: {
+    optionA: string;
+    optionB: string;
+    question: string;
+  };
+  category: "Currency" | "General";
+  isQuadratic?: boolean;
+}
+
+// Type aliases for better readability
+type BuyingStep = "initial" | "allowance" | "confirm";
+type Option = "A" | "B" | null;
+
+export function MarketBuyInterface({
+  marketId,
+  market,
+  category,
+  isQuadratic = false,
+}: MarketBuyInterfaceProps) {
+  // Blockchain interactions
+  const account = useActiveAccount();
+  const { mutateAsync: mutateTransaction } = useSendAndConfirmTransaction();
+  const { toast } = useToast();
+
+  // UI state management
+  const [isBuying, setIsBuying] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [containerHeight, setContainerHeight] = useState("auto");
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Transaction state
+  const [selectedOption, setSelectedOption] = useState<Option>(null);
+  const [amount, setAmount] = useState(0);
+  const [calculatedShares, setCalculatedShares] = useState(0);
+  const [buyingStep, setBuyingStep] = useState<BuyingStep>("initial");
+  const [isApproving, setIsApproving] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  // Add to state variables
+  const [error, setError] = useState<string | null>(null);
+
+  // Determine which contract to use
+  const getContract = () => {
+    if (category === "Currency") {
+      return isQuadratic ? quadraticOracleContract : oracleContract;
+    } else {
+      return isQuadratic ? quadraticContract : contract;
+    }
+  };
+
+  // Update container height when content changes, including when amount changes
+  useEffect(() => {
+    updateContainerHeight();
+  }, [isBuying, buyingStep, isVisible, error, amount, calculatedShares]);
+
+  // Calculate quadratic shares when amount changes
+  useEffect(() => {
+    if (isQuadratic && amount > 0) {
+      // Simple client-side approximation of quadratic calculation for UI purposes
+      // sqrt(amount * 10^18) * 10^9 is the formula used in the contract
+      setCalculatedShares(Math.floor(Math.sqrt(amount) * 10**9));
+    } else {
+      setCalculatedShares(amount);
+    }
+  }, [amount, isQuadratic]);
+
+  // Separate function to update container height
+  const updateContainerHeight = () => {
+    if (contentRef.current) {
+      // Use requestAnimationFrame for more reliable layout calculations
+      requestAnimationFrame(() => {
+        setContainerHeight(`${contentRef.current?.scrollHeight || 0}px`);
+      });
+    }
+  };
+
+  // Handlers for user interactions
+  const handleBuy = (option: "A" | "B") => {
+    setIsVisible(false);
+    setTimeout(() => {
+      setIsBuying(true);
+      setSelectedOption(option);
+      setIsVisible(true);
+    }, 200); // Match transition duration
+  };
+
+  const handleCancel = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      setIsBuying(false);
+      setBuyingStep("initial");
+      setSelectedOption(null);
+      setAmount(0);
+      setCalculatedShares(0);
+      setError(null);
+      setIsVisible(true);
+    }, 200);
+  };
+
+  // Check if user needs to approve token spending
+  const checkApproval = async () => {
+    if (amount <= 0) {
+      setError("Amount must be greater than 0");
+      return;
+    }
+    setError(null);
+
+    try {
+      const userAllowance = await readContract({
+        contract: tokenContract,
+        method:
+          "function allowance(address owner, address spender) view returns (uint256)",
+        params: [
+          account?.address as string,
+          getContract().address,
+        ],
+      });
+
+      setBuyingStep(
+        userAllowance < BigInt(toWei(amount.toString()))
+          ? "allowance"
+          : "confirm"
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Handle token approval transaction
+  const handleSetApproval = async () => {
+    setIsApproving(true);
+    try {
+      const tx = await approve({
+        contract: tokenContract,
+        spender: getContract().address,
+        amount: amount,
+      });
+      await mutateTransaction(tx);
+
+      setBuyingStep("confirm");
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  // Handle share purchase transaction
+  const handleConfirm = async () => {
+    if (!selectedOption || amount <= 0) {
+      setError("Must select an option and enter an amount greater than 0");
+      return;
+    }
+
+    setIsConfirming(true);
+    try {
+      const methodName = isQuadratic ? "buySharesQuadratic" : "buyShares";
+      const tx = await prepareContractCall({
+        contract: getContract(),
+        method: `function ${methodName}(uint256 _marketId, bool _isOptionA, uint256 _amount)`,
+        params: [
+          BigInt(marketId),
+          selectedOption === "A",
+          BigInt(toWei(amount.toString())),
+        ],
+      });
+      await mutateTransaction(tx);
+
+      // Show success toast
+      toast({
+        title: "Purchase Successful!",
+        description: `You bought ${isQuadratic ? calculatedShares : amount} ${
+          selectedOption === "A"
+            ? category === "Currency"
+              ? "Yes"
+              : market.optionA
+            : category === "Currency"
+            ? "No"
+            : market.optionB
+        } shares for ${amount} SWAN tokens.`,
+        duration: 5000, // 5 seconds
+      });
+
+      handleCancel();
+    } catch (error) {
+      console.error(error);
+      // Optionally show error toast
+      toast({
+        title: "Purchase Failed",
+        description: "There was an error processing your purchase.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
+  // Render the component
+  return (
+    <div
+      className="relative transition-[height] duration-300 ease-in-out overflow-hidden"
+      style={{ height: containerHeight }}
+    >
+      <div
+        ref={contentRef}
+        className={cn(
+          "w-full transition-all duration-200 ease-in-out",
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        )}
+      >
+        {!isBuying ? (
+          // Initial option selection buttons
+          <div className="flex flex-col gap-2 mb-4">
+            {isQuadratic && (
+              <div className="text-xs text-gray-600 p-2 bg-blue-50 rounded border border-blue-200 mb-2">
+                <span className="font-bold">Quadratic Voting:</span> Your influence scales with the square root of your tokens. More tokens = more influence, but with diminishing returns.
+              </div>
+            )}
+            <div className="flex justify-between gap-4">
+              <Button
+                className={cn(
+                  "flex-1 bg-green-600/30 hover:bg-green-700/50 text-green-900 hover:text-black border-2 border-green-500",
+                  !account && "opacity-50 cursor-not-allowed"
+                )}
+                onClick={() => handleBuy("A")}
+                aria-label={`Vote ${
+                  category === "Currency" ? "Yes" : market.optionA
+                } for "${market.question}"`}
+                disabled={!account}
+                variant="ghost"
+              >
+                <span className="font-bold ">
+                  {category === "Currency" ? "Yes" : market.optionA}
+                </span>
+              </Button>
+              <Button
+                className={cn(
+                  "flex-1 bg-red-600/30 hover:bg-red-700/50 text-red-900 hover:text-black border-2 border-red-500",
+                  !account && "opacity-50 cursor-not-allowed"
+                )}
+                onClick={() => handleBuy("B")}
+                aria-label={`Vote ${
+                  category === "Currency" ? "No" : market.optionB
+                } for "${market.question}"`}
+                disabled={!account}
+                variant="ghost"
+              >
+                <span className="font-bold">
+                  {category === "Currency" ? "No" : market.optionB}
+                </span>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          // Buy interface with different steps
+          <div className="flex flex-col mb-4">
+            {buyingStep === "allowance" ? (
+              // Approval step
+              <div className="flex flex-col border-2 border-gray-300 rounded-lg p-4">
+                <h2 className="text-lg font-bold mb-4">Approval Needed</h2>
+                <p className="mb-4">
+                  You need to approve the transaction before proceeding.
+                </p>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSetApproval}
+                    className="mb-2"
+                    disabled={isApproving}
+                  >
+                    {isApproving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Approving...
+                      </>
+                    ) : (
+                      "Set Approval"
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    className="ml-2"
+                    variant="outline"
+                    disabled={isApproving}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : buyingStep === "confirm" ? (
+              // Confirmation step
+              <div className="flex flex-col border-2 border-gray-300 rounded-lg p-4">
+                <h2 className="text-lg font-bold mb-4">Confirm Transaction</h2>
+                {isQuadratic && (
+                  <div className="text-xs bg-blue-50 p-2 rounded mb-4 border border-blue-200">
+                    With quadratic voting, your {amount} tokens will give you {calculatedShares} shares, calculated as √(tokens).
+                  </div>
+                )}
+                <p className="mb-4">
+                  You are about to buy{" "}
+                  <span
+                    className={cn(
+                      "font-bold",
+                      selectedOption === "A" ? "text-green-700" : "text-red-700"
+                    )}
+                  >
+                    {isQuadratic ? calculatedShares : amount}{" "}
+                    {selectedOption === "A"
+                      ? category === "Currency"
+                        ? "Yes"
+                        : market.optionA
+                      : category === "Currency"
+                      ? "No"
+                      : market.optionB}
+                  </span>{" "}
+                  share(s).
+                </p>
+                <div className="text-xs text-gray-600 mb-4">
+                  You will spend{" "}
+                  <span className="font-bold">{amount} SWAN TOKEN</span> for
+                  this transaction.
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleConfirm}
+                    className="mb-2"
+                    disabled={isConfirming}
+                  >
+                    {isConfirming ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Confirming...
+                      </>
+                    ) : (
+                      "Confirm"
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    className="ml-2"
+                    variant="outline"
+                    disabled={isConfirming}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              // Amount input step
+              <div className="flex flex-col border-2 border-gray-300 rounded-lg p-4">
+                {isQuadratic && (
+                  <div className="text-xs bg-blue-50 p-2 rounded mb-3 border border-blue-200">
+                    <span className="font-bold block mb-1">Quadratic Voting</span>
+                    With quadratic voting, your influence is the square root of your tokens.
+                    <br/>
+                    <span className="italic">Example: 100 tokens = 10 shares, 10,000 tokens = 100 shares</span>
+                  </div>
+                )}
+                <span className="text-xs text-gray-500 mb-1">
+                  {`1 ${
+                    selectedOption === "A"
+                      ? category === "Currency"
+                        ? "Yes"
+                        : market.optionA
+                      : category === "Currency"
+                      ? "No"
+                      : market.optionB
+                  } = 1 `}
+                  <span className="font-bold">SWAN TOKEN</span>
+                  {isQuadratic && " (quadratically calculated)"}
+                </span>
+                <div className="flex flex-col gap-1 mb-2">
+                  <div className="flex items-center gap-2 overflow-visible">
+                    <div className="flex-grow relative">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="Enter amount"
+                        value={amount}
+                        onChange={(e) => {
+                          const value = Math.max(0, Number(e.target.value));
+                          setAmount(value);
+                          setError(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "-" || e.key === "e") {
+                            e.preventDefault();
+                          }
+                        }}
+                        className={cn(
+                          "w-full",
+                          error && "border-red-500 focus-visible:ring-red-500",
+                          selectedOption === "A"
+                            ? "focus-visible:ring-green-500/50 focus-visible:border-green-500"
+                            : "focus-visible:ring-red-500/50 focus-visible:border-red-500"
+                        )}
+                      />
+                    </div>
+                    <span
+                      className={cn(
+                        "font-bold whitespace-nowrap text-base",
+                        selectedOption === "A"
+                          ? "text-green-700"
+                          : "text-red-700"
+                      )}
+                    >
+                      {selectedOption === "A"
+                        ? category === "Currency"
+                          ? "Yes"
+                          : market.optionA
+                        : category === "Currency"
+                        ? "No"
+                        : market.optionB}
+                    </span>
+                  </div>
+
+                  {/* Quadratic calculation information */}
+                  {isQuadratic && amount > 0 && (
+                    <div className="text-xs text-gray-600 mt-1 p-1 border border-gray-200 rounded bg-gray-50">
+                      {amount} tokens will give you approximately <span className="font-bold">{calculatedShares}</span> shares
+                    </div>
+                  )}
+
+                  {/* Token requirement message */}
+                  <div className="min-h-[1.5rem]">
+                    {amount > 0 && (
+                      <div className="text-xs text-gray-600 mt-1">
+                        You need{" "}
+                        <span className="font-bold">{amount} SWAN TOKEN</span>{" "}
+                        for this transaction
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Error message */}
+                  <div className="min-h-[1.5rem]">
+                    {error && (
+                      <span className="text-sm text-red-500">{error}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <Button onClick={checkApproval} className="flex-1 font-bold">
+                    Confirm
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    className="flex-1"
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
