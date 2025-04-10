@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import { UD60x18, ud, ln, exp } from "@prb/math/UD60x18.sol";
+import { UD60x18, ud, ln, exp } from "@prb/math/src/UD60x18.sol";
 
 
 contract AutomatedMarketMaker {
