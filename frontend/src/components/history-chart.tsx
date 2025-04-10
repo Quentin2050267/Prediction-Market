@@ -27,10 +27,11 @@ import {
   ChartTooltipContent,
 } from "./ui/chart";
 import { useReadContract } from "thirdweb/react";
-import { contract, oracleContract } from "@/constants/contract";
+import { contract, oracleContract, quadraticContract, quadraticOracleContract } from "@/constants/contract";
 import { toEther } from "thirdweb";
-import { TrendingUp, TrendingDown, Calendar, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Calendar, Minus, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface VoteChartProps {
   index: number;
@@ -82,7 +83,7 @@ export function VoteChart({
     percent: "0",
   });
 
-  const contractToUse = category === "Currency" ? oracleContract : contract;
+  const contractToUse = category === "Currency" ? quadraticOracleContract : quadraticContract;
   const methodToUse =
     category === "Currency"
       ? "function getMarketInfo(uint256 _marketId) view returns (string assetSymbol, uint8 operator, uint256 targetPrice, uint256 endTime, uint256 duration, uint8 outcome, uint256 totalOptionAShares, uint256 totalOptionBShares, bool resolved)"
@@ -96,12 +97,27 @@ export function VoteChart({
   });
 
   // 读取所有投票数据
-  const { data: voteResults } = useReadContract({
+  const { data: voteResults, refetch: refetchVotes } = useReadContract({
     contract: contractToUse,
     method:
       "function getAllVotesByDate(uint256 _marketId) view returns (uint256[] memory dates, uint256[] memory optionAVotes, uint256[] memory optionBVotes)",
     params: [BigInt(index)],
   });
+
+  // Add polling interval for automatic updates
+  useEffect(() => {
+    // Refetch data every 10 seconds
+    const interval = setInterval(() => {
+        refetchVotes();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [refetchVotes]);
+
+  // Add manual refresh function
+  const refreshData = () => {
+    refetchVotes();
+  };
 
   useEffect(() => {
     if (!marketData) return;
@@ -133,19 +149,27 @@ export function VoteChart({
   // 处理投票数据
   useEffect(() => {
     if (!voteResults) {
+      console.log("No vote results");
       setVoteData([]);
       return;
     }
 
+    console.log("Vote results:", voteResults);
     const [dates, optionAVotes, optionBVotes] = voteResults;
+    console.log("Dates:", dates);
+    console.log("Option A votes:", optionAVotes);
+    console.log("Option B votes:", optionBVotes);
 
     // 首先创建基本投票数据
-    const votes: VoteData[] = dates.map((date: bigint, i: number) => {
-      const timestamp = Number(date) * 86400 * 1000; // 将天数转换为毫秒时间戳
+    const votes: VoteData[] = dates.map((date, i: number) => {
+      const timestamp = Number(BigInt(String(date))) * 86400 * 1000; // Convert days to milliseconds
+      const dateStr = new Date(timestamp).toLocaleDateString();
+      const yesVotes = optionAVotes[i] ? Number(BigInt(String(optionAVotes[i]))) : 0;
+      const noVotes = optionBVotes[i] ? Number(BigInt(String(optionBVotes[i]))) : 0;
       return {
-        date: new Date(timestamp).toLocaleDateString(),
-        yes: optionAVotes[i] ? parseInt(toEther(optionAVotes[i])) : 0,
-        no: optionBVotes[i] ? parseInt(toEther(optionBVotes[i])) : 0,
+        date: dateStr,
+        yes: yesVotes,
+        no: noVotes,
       };
     });
 
@@ -303,18 +327,32 @@ export function VoteChart({
             </CardDescription>
           </div>
 
-          {/* 显示当前选中点的趋势信息 */}
-          {voteData.length > 1 && (
-            <div className="flex flex-col gap-1 mt-0.5">
-              {selectedPointIndex !== null && selectedPointIndex > 0 && (
-                <div className="text-[10px] text-muted-foreground mb-0.5 text-right">
-                  {date}
-                </div>
-              )}
-              {renderTrendInfo(trendA, optionALabel, chartConfig.yes.color)}
-              {renderTrendInfo(trendB, optionBLabel, chartConfig.no.color)}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                refreshData();
+              }}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+
+            {/* Existing trend info */}
+            {voteData.length > 1 && (
+              <div className="flex flex-col gap-1 mt-0.5">
+                {selectedPointIndex !== null && selectedPointIndex > 0 && (
+                  <div className="text-[10px] text-muted-foreground mb-0.5 text-right">
+                    {date}
+                  </div>
+                )}
+                {renderTrendInfo(trendA, optionALabel, chartConfig.yes.color)}
+                {renderTrendInfo(trendB, optionBLabel, chartConfig.no.color)}
+              </div>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent

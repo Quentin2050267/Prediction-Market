@@ -3,14 +3,14 @@ import { defineChain, getContract } from "thirdweb";
 import { base } from "thirdweb/chains";
 import { kaiaTestnet } from "@/chain.config";
 
-export const tokenContractAddress = "0xB718475255960F1def588d197733979c0636d021";
-export const predictionMarketContractAddress = "0x82a8b62a8E40760B0170ba4633b7B459C58BbF95";
-export const oracleContractAddress = "0x1808B5b554822CD37B8334c03b010dD493C0A243";
-export const candidateContractAddress = "0xaFaD481e1BBcC683c3156D4e4D6d599af1ffA0f8";
+export const tokenContractAddress = "0xafD6cDEb47D71D1Ff47D16209D03C2B77DeaCF6d";
+export const predictionMarketContractAddress = "0x673d6FE94C7E152b94B5a18D0426D8217096bE50";
+export const oracleContractAddress = "0x51DCdea689d26d3ca03C2F39ca52EbA54875E7aD";
+export const candidateContractAddress = "0x324397a201BE5E31BD5f7B8201970A944dAb314D";
 // Addresses for new quadratic voting contracts
-export const quadraticContractAddress = "0x0Ca85d2dF0e2596eBA6695Bc0A535F0697EF6217"; // To be updated after deployment
-export const quadraticOracleContractAddress = "0xb20CBF32a31C2695266923587E1bE6a5fFEB836F";
-export const ammContractAddress = "0xD695058056630917eBDb476f713A547D7028f144" 
+export const quadraticContractAddress = "0x4d3a45Ced5d4eFBb1027a5AcF7De46a2CaD58126"; // To be updated after deployment
+export const quadraticOracleContractAddress = "0x7BAf6Ebf8FeE8413A3941F6Ce15a37CebAb7f415";
+export const ammContractAddress = "0xd80525F9f5C903a0fe31069DC3d57FF9a5f1E732" 
  // To be updated after deployment
 
 export const contract = getContract({
