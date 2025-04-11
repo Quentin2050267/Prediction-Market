@@ -83,14 +83,11 @@
     ```
 
 ## Local test code
-To test buyByAmount,
+To test buyByAmount, run 
     ```
-    cd contract   
+    brownie run deply_amount.py  
     ```
-
-    ```
-    brownie run deply_amount.py 
-    ```
+in the contract file
     
 ## Team Contribution
 Qin Tian: Responsible for implementing the entire codebase and github readme except for the AMM logic in the smart contract, including developing the whole frontend, backend, and the core solidity contracts.
