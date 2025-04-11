@@ -8,5 +8,5 @@ compiler:
     remappings:
       - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.8.0'
       - '@thirdweb-dev=thirdweb-dev/contracts@3.15.0'
-      - '@prb/math=PaulRBerg/prb-math@4.1.0/src'
+      - '@prb/math=PaulRBerg/prb-math@4.1.0'
     viaIR: true

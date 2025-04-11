@@ -126,6 +126,72 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
         return total_cost;
     }
 
+    function buyByAmount(uint256 _marketId, bool _isOptionA, uint256 _amount) external {
+        Market storage market = markets[_marketId];
+        require(market.endTime > block.timestamp, "Market has ended");
+        require(!market.resolved, "Market has been resolved");
+        require(_amount > 0, "Amount must be greater than 0");
+
+        // 二分查找
+        uint256 minShares = 0;
+        uint256 maxShares = _amount * 1000; 
+        uint256 _shares = 0;
+        uint256 currentAmount = 0;
+        bool found = false;
+        
+        uint256 precisionThreshold = 100; 
+        uint256 maxIterations = 50;
+        uint256 iterations = 0;
+        
+        while (iterations < maxIterations && (maxShares - minShares) > precisionThreshold) {
+            uint256 midShares = (minShares + maxShares) / 2;
+            
+            uint256 amountForMidShares = AMM.getAmount(
+                market.totalOptionAShares, 
+                market.totalOptionBShares, 
+                _isOptionA, 
+                midShares
+            );
+            
+            if (amountForMidShares > _amount) {
+                maxShares = midShares;
+            } else {
+                minShares = midShares;
+                _shares = midShares;
+                currentAmount = amountForMidShares;
+                found = true;
+            }
+            iterations++;
+        }
+        
+        require(found, "Could not find suitable share amount");
+        require(_shares > 0, "Amount too small to buy any shares");
+        require(currentAmount <= _amount, "Calculation error");
+        
+        uint256 currentDate = block.timestamp / 1 days;
+
+        require(
+            swanToken.transferFrom(msg.sender, address(this), _amount),
+            "Transfer failed"
+        );
+        
+        if (_isOptionA) {
+            market.optionASharesBalance[msg.sender] += _shares;
+            market.totalOptionAShares += _shares;
+            market.optionAVotesByDate[currentDate] += _shares;
+            market.optionAPayments[msg.sender] += _amount;
+            market.totalOptionAPayments += _amount;
+        } else {
+            market.optionBSharesBalance[msg.sender] += _shares;
+            market.totalOptionBShares += _shares;
+            market.optionBVotesByDate[currentDate] += _shares;
+            market.optionBPayments[msg.sender] += _amount;
+            market.totalOptionBPayments += _amount;
+        }
+
+        emit SharesPurchased(_marketId, msg.sender, _isOptionA, _shares);
+    }
+
     function buyByShares(uint256 _marketId, bool _isOptionA, uint256 _shares) external {
         Market storage market = markets[_marketId];
         require(market.totalOptionAShares > 0 && market.totalOptionBShares > 0, "Not enough liquidity!");
@@ -365,8 +431,12 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
             string memory optionB,
             uint256 totalOptionAShares,
             uint256 totalOptionBShares,
-            bool resolved
-        ) {
+            uint256 marketCost,
+            bool resolved,
+            uint256 totalOptionAPayments,
+            uint256 totalOptionBPayments
+        )
+    {
         Market storage market = markets[_marketId];
         return (
             market.question,
@@ -377,7 +447,10 @@ contract PredictionMarketNew is Ownable, ReentrancyGuard {
             market.optionB,
             market.totalOptionAShares,
             market.totalOptionBShares,
-            market.resolved
+            market.marketCost,
+            market.resolved,
+            market.totalOptionAPayments,
+            market.totalOptionBPayments
         );
     }
 
