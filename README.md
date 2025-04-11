@@ -1,4 +1,5 @@
 # Web3-Prediction-Market
+For the demo shown in class, please go to https://github.com/Quentin2050267/Prediction-Market/tree/9e3415c19f37bc1cd8d98c0a1236b52469325b23, which is bug-free but didn't contain the AMM and quadratic voting feature.
 
 ## Implementation
 
